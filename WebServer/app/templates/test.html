@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Тестирование - Сервис мониторинга{% endblock %}
+
+{% block content %}
+<h2>Тестирование детектора</h2>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Загрузка тестового изображения</h5>
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <label class="form-label">Выберите изображение</label>
+                        <input type="file" class="form-control" name="file" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Загрузить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Результат детекции</h5>
+                <div id="detectionResult">
+                    <!-- Здесь будет результат детекции -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/test.js"></script>
+{% endblock %} 
