@@ -32,7 +32,7 @@ class DetectorSettings(BaseModel):
     score_threshold: float
     min_area: float
 
-# Временное хранилище данных (в реальном приложении использовать базу данных)
+# Хранилище данных (будем использовать базу данных?)
 emails = {}
 regions = {}
 
@@ -46,7 +46,7 @@ async def root(request: Request):
 async def get_emails_page(request: Request):
     return templates.TemplateResponse("emails.html", {"request": request})
 
-@app.get("/emails/list")
+@app.get("/emails/list") # Добавлено помимо ТЗ
 async def get_emails():
     return JSONResponse(content=emails)
 
@@ -68,7 +68,7 @@ async def delete_email(email_id: int):
 async def get_regions_page(request: Request):
     return templates.TemplateResponse("regions.html", {"request": request})
 
-@app.get("/regions/list")
+@app.get("/regions/list") # Добавлено помимо ТЗ
 async def get_regions():
     return JSONResponse(content=regions)
 
@@ -122,3 +122,5 @@ async def configure_sat_service(settings: SatServiceSettings):
 async def configure_detector(settings: DetectorSettings):
     # Здесь будет логика настройки детектора
     return settings
+
+#uvicorn app.main:app --reload
