@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Сервис мониторинга{% endblock %}
+
+{% block content %}
+<h1>Сервис мониторинга аномалий</h1>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Настройки сервиса</h5>
+                <form id="satServiceForm">
+                    <div class="mb-3">
+                        <label class="form-label">API Key</label>
+                        <input type="text" class="form-control" name="api_key">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Base URL</label>
+                        <input type="text" class="form-control" name="base_url">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Timeout</label>
+                        <input type="number" class="form-control" name="timeout">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Настройки детектора</h5>
+                <form id="detectorForm">
+                    <div class="mb-3">
+                        <label class="form-label">Порог score</label>
+                        <input type="number" step="0.1" class="form-control" name="score_threshold">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Минимальная площадь</label>
+                        <input type="number" step="0.1" class="form-control" name="min_area">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/index.js"></script>
+{% endblock %} 

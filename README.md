@@ -14,3 +14,4 @@ pip install -r requirements.txt.
 Микросервис имеет API json интерфейс и html интерфейс. Взаимодействие между 
 пользователем и элементами микросервиса описан следующей диаграммой:
 
+![img.png](dataflow-Wildfire_monitoring_microservice_API.png)
