@@ -42,13 +42,11 @@ async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "active_page": "monitoring"})
 
 # Управление email адресами
-@app.get("/emails", response_class=HTMLResponse)
-async def get_emails_page(request: Request):
+@app.get("/emails")
+async def get_emails(request: Request):
+    if 'application/json' in request.headers.get('Accept', ''):
+        return JSONResponse(content=emails)
     return templates.TemplateResponse("emails.html", {"request": request, "active_page": "emails"})
-
-@app.get("/emails/list")
-async def get_emails():
-    return JSONResponse(content=emails)
 
 @app.post("/emails/add")
 async def add_email(email: Email):
@@ -64,13 +62,11 @@ async def delete_email(email_id: int):
     return {"message": "Email deleted"}
 
 # Управление регионами
-@app.get("/regions", response_class=HTMLResponse)
-async def get_regions_page(request: Request):
+@app.get("/regions")
+async def get_regions(request: Request):
+    if 'application/json' in request.headers.get('Accept', ''):
+        return JSONResponse(content=regions)
     return templates.TemplateResponse("regions.html", {"request": request, "active_page": "regions"})
-
-@app.get("/regions/list")
-async def get_regions():
-    return JSONResponse(content=regions)
 
 @app.post("/regions/add")
 async def add_region(region: Region):

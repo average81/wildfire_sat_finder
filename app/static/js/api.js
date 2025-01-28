@@ -4,6 +4,7 @@ async function apiRequest(url, method = 'GET', data = null) {
         method,
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
     };
 
@@ -20,11 +21,11 @@ async function apiRequest(url, method = 'GET', data = null) {
 
 // Функции для работы с email адресами
 async function getEmails() {
-    return await apiRequest('/emails/list');
+    return await apiRequest('/emails');
 }
 
 async function addEmail(email) {
-    return await apiRequest('/emails/add', 'POST', { email });
+    return await apiRequest('/emails/add', 'POST', { email: email });
 }
 
 async function deleteEmail(id) {
@@ -33,7 +34,7 @@ async function deleteEmail(id) {
 
 // Функции для работы с регионами
 async function getRegions() {
-    return await apiRequest('/regions/list');
+    return await apiRequest('/regions');
 }
 
 async function addRegion(region) {
