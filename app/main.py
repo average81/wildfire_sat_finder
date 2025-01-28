@@ -39,12 +39,12 @@ regions = {}
 # Основной маршрут
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request, "active_page": "monitoring"})
 
 # Управление email адресами
 @app.get("/emails", response_class=HTMLResponse)
 async def get_emails_page(request: Request):
-    return templates.TemplateResponse("emails.html", {"request": request})
+    return templates.TemplateResponse("emails.html", {"request": request, "active_page": "emails"})
 
 @app.get("/emails/list")
 async def get_emails():
@@ -66,7 +66,7 @@ async def delete_email(email_id: int):
 # Управление регионами
 @app.get("/regions", response_class=HTMLResponse)
 async def get_regions_page(request: Request):
-    return templates.TemplateResponse("regions.html", {"request": request})
+    return templates.TemplateResponse("regions.html", {"request": request, "active_page": "regions"})
 
 @app.get("/regions/list")
 async def get_regions():
@@ -93,7 +93,7 @@ async def get_area_image(lat1: float, lon1: float, lat2: float, lon2: float, wid
 
 @app.get("/tstimage", response_class=HTMLResponse)
 async def test_page(request: Request):
-    return templates.TemplateResponse("test.html", {"request": request})
+    return templates.TemplateResponse("test.html", {"request": request, "active_page": "test"})
 
 @app.post("/tstimage")
 async def upload_test_image(file: UploadFile = File(...)):
