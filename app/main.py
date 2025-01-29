@@ -37,14 +37,31 @@ emails = {}
 regions = {}
 
 # Основной маршрут
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 async def root(request: Request):
+    if request.headers.get('Accept') == 'application/json':
+        # Возвращаем общую информацию о микросервисе в формате JSON
+        return JSONResponse(content={
+            "name": "Сервис мониторинга аномалий",
+            "version": "1.0",
+            "description": "Микросервис для мониторинга и детектирования аномалий на спутниковых снимках",
+            "endpoints": {
+                "emails": "/emails",
+                "regions": "/regions",
+                "test": "/tstimage",
+                "settings": {
+                    "sat_service": "/sat_service",
+                    "detector": "/detector"
+                }
+            }
+        })
+    # Возвращаем HTML страницу с настройками
     return templates.TemplateResponse("index.html", {"request": request, "active_page": "monitoring"})
 
 # Управление email адресами
 @app.get("/emails")
 async def get_emails(request: Request):
-    if 'application/json' in request.headers.get('Accept', ''):
+    if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content=emails)
     return templates.TemplateResponse("emails.html", {"request": request, "active_page": "emails"})
 
@@ -64,7 +81,7 @@ async def delete_email(email_id: int):
 # Управление регионами
 @app.get("/regions")
 async def get_regions(request: Request):
-    if 'application/json' in request.headers.get('Accept', ''):
+    if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content=regions)
     return templates.TemplateResponse("regions.html", {"request": request, "active_page": "regions"})
 
@@ -83,12 +100,44 @@ async def delete_region(region_id: int):
 
 # Работа с изображениями
 @app.get("/areaimg")
-async def get_area_image(lat1: float, lon1: float, lat2: float, lon2: float, width: int, height: int):
-    # Здесь будет логика получения изображения
-    return {"message": "Image retrieval not implemented yet"}
+async def get_area_image(
+    request: Request,
+    lat1: float, 
+    lon1: float, 
+    lat2: float, 
+    lon2: float, 
+    width: int, 
+    height: int
+):
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content={
+            "coordinates": {
+                "lat1": lat1, "lon1": lon1,
+                "lat2": lat2, "lon2": lon2
+            },
+            "size": {"width": width, "height": height},
+            "message": "Image retrieval not implemented yet"
+        })
+    # В будущем здесь будет возвращаться изображение
+    return templates.TemplateResponse("image.html", {
+        "request": request,
+        "coordinates": {
+            "lat1": lat1, "lon1": lon1,
+            "lat2": lat2, "lon2": lon2
+        },
+        "size": {"width": width, "height": height}
+    })
 
-@app.get("/tstimage", response_class=HTMLResponse)
+@app.get("/tstimage")
 async def test_page(request: Request):
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content={
+            "description": "Endpoint для тестирования детектора аномалий",
+            "methods": {
+                "GET": "Получить страницу тестирования",
+                "POST": "Загрузить тестовое изображение"
+            }
+        })
     return templates.TemplateResponse("test.html", {"request": request, "active_page": "test"})
 
 @app.post("/tstimage")
@@ -102,11 +151,22 @@ async def test_detect():
     return {"message": "Detection not implemented yet"}
 
 @app.get("/areamap/{region_id}")
-async def get_area_map(region_id: int):
+async def get_area_map(request: Request, region_id: int):
     if region_id not in regions:
         raise HTTPException(status_code=404, detail="Region not found")
-    # Здесь будет логика получения карты с аномалиями
-    return {"message": "Area map retrieval not implemented yet"}
+    
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content={
+            "region_id": region_id,
+            "region_data": regions[region_id],
+            "message": "Area map retrieval not implemented yet"
+        })
+    # В будущем здесь будет возвращаться HTML страница с картой
+    return templates.TemplateResponse("map.html", {
+        "request": request, 
+        "active_page": "regions",
+        "region": regions[region_id]
+    })
 
 # Настройка модулей
 @app.put("/sat_service")

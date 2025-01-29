@@ -12,3 +12,4 @@ Python 3.11
 • pip install -r requirements.txt  
 2. Запустите web-сервер, в виртуальном окружении выполните: uvicorn app.main:app  
 3. Для работы с программой в браузере откройте http://127.0.0.1:8000 
+4. Для запуска тестирования endpoints в терминале набрать: python tests/test_endpoints.py

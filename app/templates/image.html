@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Просмотр изображения - Сервис мониторинга{% endblock %}
+
+{% block content %}
+<h2>Просмотр области</h2>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Параметры области</h5>
+        <p class="card-text">
+            Координаты: ({{ coordinates.lat1 }}, {{ coordinates.lon1 }}) - 
+            ({{ coordinates.lat2 }}, {{ coordinates.lon2 }})
+        </p>
+        <p class="card-text">
+            Размер изображения: {{ size.width }}x{{ size.height }}
+        </p>
+        <div class="alert alert-info">
+            Функционал получения изображения в разработке
+        </div>
+    </div>
+</div>
+{% endblock %} 
