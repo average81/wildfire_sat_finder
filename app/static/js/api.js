@@ -4,6 +4,7 @@ async function apiRequest(url, method = 'GET', data = null) {
         method,
         headers: {
             'Content-Type': 'application/json',
+			'Accept': 'application/json',
         },
     };
 
@@ -13,14 +14,14 @@ async function apiRequest(url, method = 'GET', data = null) {
 
     const response = await fetch(url, options);
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('HTTP error! status: ${response.status}');
     }
     return await response.json();
 }
 
 // Функции для работы с email адресами
 async function getEmails() {
-    return await apiRequest('/emails/list');
+    return await apiRequest('/emails');
 }
 
 async function addEmail(email) {
@@ -28,12 +29,12 @@ async function addEmail(email) {
 }
 
 async function deleteEmail(id) {
-    return await apiRequest(`/emails/${id}`, 'DELETE');
+    return await apiRequest('/emails/' + id, 'DELETE');
 }
 
 // Функции для работы с регионами
 async function getRegions() {
-    return await apiRequest('/regions/list');
+    return await apiRequest('/regions');
 }
 
 async function addRegion(region) {
@@ -41,7 +42,7 @@ async function addRegion(region) {
 }
 
 async function deleteRegion(id) {
-    return await apiRequest(`/regions/${id}`, 'DELETE');
+    return await apiRequest('/regions/${id}', 'DELETE');
 }
 
 // Функции для работы с настройками
@@ -64,7 +65,7 @@ async function uploadTestImage(file) {
     });
     
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('HTTP error! status: ${response.status}');
     }
     return await response.json();
 }
@@ -75,9 +76,9 @@ async function getTestDetection() {
 
 async function getAreaImage(params) {
     const queryString = new URLSearchParams(params).toString();
-    return await apiRequest(`/areaimg?${queryString}`);
+    return await apiRequest('/areaimg?${queryString}');
 }
 
 async function getAreaMap(regionId) {
-    return await apiRequest(`/areamap/${regionId}`);
+    return await apiRequest('/areamap/${regionId}');
 } 

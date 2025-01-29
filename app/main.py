@@ -38,8 +38,8 @@ class DetectorSettings(BaseModel):
     min_area: float
 
 # Временное хранилище данных (в реальном приложении использовать базу данных)
-emails = {}
-regions = {}
+emails = []
+regions = []
 
 # Основной маршрут
 @app.get("/")
@@ -73,14 +73,15 @@ async def get_emails(request: Request):
 @app.post("/emails/add")
 async def add_email(email: Email):
     email_id = len(emails) + 1
-    emails[email_id] = email.email
+    #emails[email_id] = email.email
+    emails.append({"id": email_id, "email": email.email})
     return {"id": email_id, "email": email.email}
 
 @app.delete("/emails/{email_id}")
 async def delete_email(email_id: int):
-    if email_id not in emails:
+    if email_id > len(emails):
         raise HTTPException(status_code=404, detail="Email not found")
-    del emails[email_id]
+    del emails[email_id - 1]
     return {"message": "Email deleted"}
 
 # Управление регионами

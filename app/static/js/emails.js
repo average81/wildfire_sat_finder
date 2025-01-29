@@ -7,15 +7,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const emails = await getEmails();
             emailList.innerHTML = '';
             
-            for (const [id, email] of Object.entries(emails)) {
-                const div = document.createElement('div');
-                div.className = 'email-item d-flex justify-content-between align-items-center mb-2';
-                div.innerHTML = `
-                    <span>${email}</span>
-                    <button class="btn btn-danger btn-sm" onclick="deleteEmailHandler(${id})">Удалить</button>
-                `;
-                emailList.appendChild(div);
-            }
+            for (const emailObj of emails) {
+			   const div = document.createElement('div');
+			   div.className = 'email-item d-flex justify-content-between align-items-center mb-2';
+			   div.innerHTML = `
+				   <span>${emailObj.email}</span>
+				   <span>${emailObj.id}</span>
+				   <button class="btn btn-danger btn-sm" onclick="deleteEmailHandler(${emailObj.id})">Удалить</button>
+			   `;
+			   emailList.appendChild(div);
+			}
         } catch (error) {
             alert('Ошибка при загрузке списка email: ' + error.message);
         }
@@ -26,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
             await deleteEmail(id);
             await loadEmails();
         } catch (error) {
-            alert('Ошибка при удалении email: ' + error.message);
+            alert('Ошибка при удалении email' + id + ': ' + error.message);
         }
     };
 
