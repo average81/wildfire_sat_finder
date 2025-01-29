@@ -44,7 +44,7 @@ class NASAAPI:
         params = {
             'lat': lat,
             'lon': lon,
-            'date': date.strftime("%YYYY-%mm-%dd"),
+            'date': date.strftime("%Y-%m-%d"),
             'dim': min(angle_width, angle_height),  # Размер области в градусах
             'api_key': self.api_key
         }
@@ -56,3 +56,5 @@ class NASAAPI:
             raise requests.HTTPError(f"HTTP ошибка: {http_err}") from http_err
         except Exception as e:
             raise ValueError(f"Не удалось получить или обработать изображение: {str(e)}") from e
+
+nasasat = NASAAPI()

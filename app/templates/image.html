@@ -9,14 +9,13 @@
         <h5 class="card-title">Параметры области</h5>
         <p class="card-text">
             Координаты: ({{ coordinates.lat1 }}, {{ coordinates.lon1 }}) - 
-            ({{ coordinates.lat2 }}, {{ coordinates.lon2 }})
+            ({{ coordinates.width }}, {{ coordinates.height }})
         </p>
-        <p class="card-text">
-            Размер изображения: {{ size.width }}x{{ size.height }}
-        </p>
+        
         <div class="alert alert-info">
             Функционал получения изображения в разработке
         </div>
+		<img src="data:image/jpg;base64,{{ encoded_img }}">
     </div>
 </div>
 {% endblock %} 

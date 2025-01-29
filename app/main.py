@@ -5,12 +5,17 @@ from fastapi.templating import Jinja2Templates
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
+from sat_service.sat_service import sat_img_service
+import cv2
+import numpy as np
+import base64
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
 
 # Подключение статических файлов
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 
 # Модели данных
 class Email(BaseModel):
@@ -26,7 +31,7 @@ class Region(BaseModel):
 class SatServiceSettings(BaseModel):
     api_key: str
     base_url: str
-    timeout: int
+    user_id: str
 
 class DetectorSettings(BaseModel):
     score_threshold: float
@@ -102,30 +107,35 @@ async def delete_region(region_id: int):
 @app.get("/areaimg")
 async def get_area_image(
     request: Request,
-    lat1: float, 
-    lon1: float, 
-    lat2: float, 
-    lon2: float, 
-    width: int, 
-    height: int
+    lat: float,
+    lon: float,
+    width: float,
+    height: float
 ):
+    img = sat_img_service.get_image(lat, lon, width, height)
+    print(img)
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
             "coordinates": {
-                "lat1": lat1, "lon1": lon1,
-                "lat2": lat2, "lon2": lon2
+                "lat1": lat, "lon1": lon,
+                "width": width, "height": height
             },
-            "size": {"width": width, "height": height},
             "message": "Image retrieval not implemented yet"
         })
     # В будущем здесь будет возвращаться изображение
+    img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
+    ret, buffer = cv2.imencode('.jpg', img)
+    frame_bytes = buffer.tobytes()
+    encoded_img = base64.b64encode(frame_bytes).decode('utf-8')
+    #return Response(content=frame_bytes, media_type='image/jpeg')
     return templates.TemplateResponse("image.html", {
         "request": request,
         "coordinates": {
-            "lat1": lat1, "lon1": lon1,
-            "lat2": lat2, "lon2": lon2
+            "lat1": lat, "lon1": lon,
+            "width": width, "height": height,
         },
-        "size": {"width": width, "height": height}
+        "encoded_img": encoded_img,
+
     })
 
 @app.get("/tstimage")

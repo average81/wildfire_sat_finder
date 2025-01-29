@@ -8,7 +8,8 @@ from sentinelhub import (
 )
 import PIL
 import PIL.Image
-from datetime import datetime
+from datetime import datetime, timedelta
+import numpy as np
 
 class SentinelHubAPI:
     """
@@ -66,8 +67,8 @@ class SentinelHubAPI:
                 CRS.WGS84
             )
             size = (700, 700)  # Размер изображения
-            start_date = end_date - datetime.timedelta(days=5)
-            time_interval = (start_date.strftime("%YYYY-%mm-%dd"), end_date.strftime("%YYYY-%mm-%dd"))  # Временной интервал
+            start_date = end_date - timedelta(days=5)
+            time_interval = (start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))  # Временной интервал
 
             # Скрипт для получения цветного изображения
             evalscript_true_color = """
@@ -113,3 +114,5 @@ class SentinelHubAPI:
                 raise ValueError("Не удалось загрузить изображение из Sentinel Hub")
         except Exception as e:
             raise ValueError(f"Ошибка получения изображения из Sentinel Hub: {str(e)}") from e
+
+sentinelsat = SentinelHubAPI()
