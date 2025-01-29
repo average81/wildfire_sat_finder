@@ -5,6 +5,13 @@
 
 Для работы модели использован интерпретатор Python3.11.
 
+1. Установите виртуальное окружениеие и зависимости. Запустите командную строку в скаченной папке web сервера и выполните:  
+• python -m venv env  
+• env\Scripts\activate  
+• pip install -r requirements.txt  
+2. Запустите web-сервер, в виртуальном окружении выполните: uvicorn app.main:app  
+3. Для работы с программой в браузере откройте http://127.0.0.1:8000 
+4. Для запуска тестирования endpoints в терминале набрать: python tests/test_endpoints.py
 ### Docker
 docker build -t wildfire-detection .
 docker compose up -d
