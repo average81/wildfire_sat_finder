@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const regions = await getRegions();
             regionList.innerHTML = '';
             
-            for (const [id, region] of Object.entries(regions)) {
+            for (let i = 0; i < regions.length; i++) {
+                const region = regions[i];
                 const div = document.createElement('div');
                 div.className = 'region-item mb-3 card';
                 div.innerHTML = `
@@ -16,8 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="card-text">
                             Координаты: (${region.lat1}, ${region.lon1}) - (${region.lat2}, ${region.lon2})
                         </p>
-                        <button class="btn btn-danger btn-sm" onclick="deleteRegionHandler(${id})">Удалить</button>
-                        <a href="/areamap/${id}" class="btn btn-primary btn-sm">Показать карту</a>
+                        <button class="btn btn-danger btn-sm" onclick="deleteRegionHandler(${i})">Удалить</button>
+                        <a href="/areamap/${i}" class="btn btn-primary btn-sm">Показать карту</a>
                     </div>
                 `;
                 regionList.appendChild(div);
@@ -28,6 +29,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.deleteRegionHandler = async function(id) {
+        if (typeof id !== 'number') {
+            console.error('Invalid id:', id);
+            return;
+        }
         try {
             await deleteRegion(id);
             await loadRegions();

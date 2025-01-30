@@ -72,41 +72,33 @@ async def get_emails(request: Request):
 
 @app.post("/emails/add")
 async def add_email(email: Email):
-    email_id = len(emails) + 1
-    emails.append({"id": email_id, "email": email.email})  # добавляем в список
-    return {"id": email_id, "email": email.email}
+    emails.append(email.email)  # Просто добавляем email в список
+    return {"id": len(emails) - 1, "email": email.email}  # Возвращаем индекс как id
 
 @app.delete("/emails/{email_id}")
 async def delete_email(email_id: int):
-    # Найдем email по id
-    email_index = next((index for (index, email) in enumerate(emails) 
-                       if email["id"] == email_id), None)
-    if email_index is None:
+    if email_id >= len(emails):
         raise HTTPException(status_code=404, detail="Email not found")
-    
-    del emails[email_index]
+    del emails[email_id]
     return {"message": "Email deleted"}
 
 # Управление регионами
 @app.get("/regions")
 async def get_regions(request: Request):
     if request.headers.get('Accept') == 'application/json':
-        return JSONResponse(content=regions)
+        return JSONResponse(content=regions)  # возвращаем список напрямую
     return templates.TemplateResponse("regions.html", {"request": request, "active_page": "regions"})
 
 @app.post("/regions/add")
 async def add_region(region: Region):
-    region_id = len(regions) + 1
-    region_data = region.dict()
-    region_data["id"] = region_id
-    regions.append(region_data)
-    return {"id": region_id, "region": region_data}
+    regions.append(region.dict())  # добавляем регион в список
+    return {"id": len(regions) - 1, "region": region.dict()}
 
 @app.delete("/regions/{region_id}")
 async def delete_region(region_id: int):
-    if region_id > len(regions):
+    if region_id >= len(regions):
         raise HTTPException(status_code=404, detail="Region not found")
-    del regions[region_id - 1]
+    del regions[region_id]
     return {"message": "Region deleted"}
 
 # Работа с изображениями

@@ -7,12 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const emails = await getEmails();
             emailList.innerHTML = '';
             
-            for (const email of emails) {
+            for (let i = 0; i < emails.length; i++) {
                 const div = document.createElement('div');
                 div.className = 'email-item d-flex justify-content-between align-items-center mb-2';
                 div.innerHTML = `
-                    <span>${email.email}</span>
-                    <button class="btn btn-danger btn-sm" onclick="deleteEmailHandler(${email.id})">Удалить</button>
+                    <span>${emails[i]}</span>
+                    <button class="btn btn-danger btn-sm" onclick="deleteEmailHandler(${i})">Удалить</button>
                 `;
                 emailList.appendChild(div);
             }
@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.deleteEmailHandler = async function(id) {
+        if (typeof id !== 'number') {
+            console.error('Invalid id:', id);
+            return;
+        }
         try {
             await deleteEmail(id);
             await loadEmails();
