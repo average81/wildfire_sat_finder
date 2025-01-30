@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Детектор аномалий - Сервис мониторинга{% endblock %}
+
+{% block content %}
+<h2>Результаты детектирования</h2>
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Изображение с детекцией</h5>
+                <img src="data:image/jpeg;base64,{{ encoded_img }}" class="img-fluid" alt="Detected image">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Метрики</h5>
+                <table class="table">
+                    <tr>
+                        <td>Precision:</td>
+                        <td>{{ metrics.precision }}</td>
+                    </tr>
+                    <tr>
+                        <td>Recall:</td>
+                        <td>{{ metrics.recall }}</td>
+                    </tr>
+                    <tr>
+                        <td>F1 Score:</td>
+                        <td>{{ metrics.f1_score }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

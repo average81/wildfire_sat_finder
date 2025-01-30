@@ -38,8 +38,8 @@ class DetectorSettings(BaseModel):
     min_area: float
 
 # Временное хранилище данных (в реальном приложении использовать базу данных)
-emails = []
-regions = []
+emails = []  # список объектов
+regions = []  # список объектов
 
 # Основной маршрут
 @app.get("/")
@@ -67,21 +67,24 @@ async def root(request: Request):
 @app.get("/emails")
 async def get_emails(request: Request):
     if request.headers.get('Accept') == 'application/json':
-        return JSONResponse(content=emails)
+        return JSONResponse(content=emails)  # возвращаем список
     return templates.TemplateResponse("emails.html", {"request": request, "active_page": "emails"})
 
 @app.post("/emails/add")
 async def add_email(email: Email):
     email_id = len(emails) + 1
-    #emails[email_id] = email.email
-    emails.append({"id": email_id, "email": email.email})
+    emails.append({"id": email_id, "email": email.email})  # добавляем в список
     return {"id": email_id, "email": email.email}
 
 @app.delete("/emails/{email_id}")
 async def delete_email(email_id: int):
-    if email_id > len(emails):
+    # Найдем email по id
+    email_index = next((index for (index, email) in enumerate(emails) 
+                       if email["id"] == email_id), None)
+    if email_index is None:
         raise HTTPException(status_code=404, detail="Email not found")
-    del emails[email_id - 1]
+    
+    del emails[email_index]
     return {"message": "Email deleted"}
 
 # Управление регионами
@@ -94,14 +97,16 @@ async def get_regions(request: Request):
 @app.post("/regions/add")
 async def add_region(region: Region):
     region_id = len(regions) + 1
-    regions[region_id] = region.dict()
-    return {"id": region_id, "region": region}
+    region_data = region.dict()
+    region_data["id"] = region_id
+    regions.append(region_data)
+    return {"id": region_id, "region": region_data}
 
 @app.delete("/regions/{region_id}")
 async def delete_region(region_id: int):
-    if region_id not in regions:
+    if region_id > len(regions):
         raise HTTPException(status_code=404, detail="Region not found")
-    del regions[region_id]
+    del regions[region_id - 1]
     return {"message": "Region deleted"}
 
 # Работа с изображениями
@@ -114,7 +119,7 @@ async def get_area_image(
     height: float
 ):
     img = sat_img_service.get_image(lat, lon, width, height)
-    print(img)
+    #print(img)
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
             "coordinates": {
@@ -123,20 +128,30 @@ async def get_area_image(
             },
             "message": "Image retrieval not implemented yet"
         })
-    # В будущем здесь будет возвращаться изображение
-    img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
-    ret, buffer = cv2.imencode('.jpg', img)
-    frame_bytes = buffer.tobytes()
-    encoded_img = base64.b64encode(frame_bytes).decode('utf-8')
-    #return Response(content=frame_bytes, media_type='image/jpeg')
+
+    try:
+        # Получаем изображение через сервис
+        #img = sat_img_service.get_image(lat, lon, width, height)
+        if img:
+            # Конвертируем изображение из PIL в формат для отображения
+            img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
+            ret, buffer = cv2.imencode('.jpg', img)
+            encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
+        else:
+            encoded_img = None
+    except Exception as e:
+        print(f"Error getting image: {str(e)}")
+        encoded_img = None
+
     return templates.TemplateResponse("image.html", {
         "request": request,
         "coordinates": {
-            "lat1": lat, "lon1": lon,
-            "width": width, "height": height,
+            "lat1": lat,
+            "lon1": lon,
+            "width": width,
+            "height": height,
         },
-        "encoded_img": encoded_img,
-
+        "encoded_img": encoded_img
     })
 
 @app.get("/tstimage")
@@ -163,29 +178,106 @@ async def test_detect():
 
 @app.get("/areamap/{region_id}")
 async def get_area_map(request: Request, region_id: int):
-    if region_id not in regions:
+    if region_id > len(regions):
         raise HTTPException(status_code=404, detail="Region not found")
+    region = regions[region_id - 1]
     
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
             "region_id": region_id,
-            "region_data": regions[region_id],
+            "region_data": region,
             "message": "Area map retrieval not implemented yet"
         })
-    # В будущем здесь будет возвращаться HTML страница с картой
     return templates.TemplateResponse("map.html", {
         "request": request, 
         "active_page": "regions",
-        "region": regions[region_id]
+        "region": region
     })
 
 # Настройка модулей
+@app.get("/sat_service")
+async def get_sat_service(request: Request):
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content={
+            "current_settings": {
+                "api_key": "current_key",
+                "base_url": "current_url",
+                "user_id": "current_user"
+            },
+            "available_services": [
+                {
+                    "name": "Sentinel-2",
+                    "description": "Европейский спутник с разрешением 10м",
+                    "base_url": "sentinel_url"
+                },
+                {
+                    "name": "Landsat-8",
+                    "description": "Американский спутник с разрешением 30м",
+                    "base_url": "landsat_url"
+                }
+            ]
+        })
+    return templates.TemplateResponse("sat_service.html", {
+        "request": request, 
+        "active_page": "settings"
+    })
+
 @app.put("/sat_service")
 async def configure_sat_service(settings: SatServiceSettings):
     # Здесь будет логика настройки сервиса спутниковых снимков
     return settings
 
-@app.put("/detector")
-async def configure_detector(settings: DetectorSettings):
-    # Здесь будет логика настройки детектора
-    return settings
+@app.get("/detector")
+async def get_detector(
+    request: Request,
+    lat1: float,
+    lon1: float,
+    lat2: float,
+    lon2: float
+):
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content={
+            "input_coordinates": {
+                "lat1": lat1, "lon1": lon1,
+                "lat2": lat2, "lon2": lon2
+            },
+            "detection_results": {
+                "objects_found": 3,
+                "metrics": {
+                    "precision": 0.95,
+                    "recall": 0.87,
+                    "f1_score": 0.91
+                }
+            }
+        })
+    
+    # Получаем изображение
+    width = abs(lon2 - lon1)
+    height = abs(lat2 - lat1)
+    img = sat_img_service.get_image(lat1, lon1, width, height)
+    
+    # Конвертируем изображение для отображения
+    img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
+    
+    # Здесь будет логика детектора
+    # Пока просто рисуем тестовую рамку
+    cv2.rectangle(img, (100, 100), (200, 200), (0, 255, 0), 2)
+    
+    # Кодируем изображение для отображения
+    ret, buffer = cv2.imencode('.jpg', img)
+    encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
+    
+    return templates.TemplateResponse("detector.html", {
+        "request": request,
+        "active_page": "test",
+        "coordinates": {
+            "lat1": lat1, "lon1": lon1,
+            "lat2": lat2, "lon2": lon2
+        },
+        "encoded_img": encoded_img,
+        "metrics": {
+            "precision": 0.95,
+            "recall": 0.87,
+            "f1_score": 0.91
+        }
+    })

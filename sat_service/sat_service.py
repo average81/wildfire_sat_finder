@@ -5,6 +5,24 @@ from datetime import datetime
 #Спутниковые сервисы
 sat_services = [ nasasat, sentinelsat]
 
+def validate_coordinates(lat: float, lon: float) -> Tuple[bool, str]:
+    """
+    Проверяет, находятся ли координаты в допустимом диапазоне.
+
+    Args:
+        lat (float): Широта.
+        lon (float): Долгота.
+
+    Returns:
+        Tuple[bool, str]: Tuple, где первый элемент указывает валидность,
+                          а второй содержит сообщение об ошибке при необходимости.
+    """
+    if not (-90 <= lat <= 90):
+        return False, "❌ Широта должна быть в диапазоне -90 до 90"
+    if not (-180 <= lon <= 180):
+        return False, "❌ Долгота должна быть в диапазоне -180 до 180"
+    return True, ""
+
 class Image_service:
     def __init__(self):
         self.services = sat_services
@@ -24,6 +42,9 @@ class Image_service:
             time = datetime.now()
         if self.active_service is None:
             raise Exception('No active service')
+        val,err = validate_coordinates(latitude, longitude)
+        if not val:
+            raise Exception(err )
         return self.active_service.fetch_image(latitude, longitude, angle_width, angle_height,time)
 
 sat_img_service = Image_service()
