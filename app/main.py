@@ -128,9 +128,10 @@ async def get_area_image(
         })
 
     try:
+        # Получаем изображение через сервис
         img = sat_img_service.get_image(lat, lon, width, height)
         if img:
-            # Конвертируем изображение
+            # Конвертируем изображение из PIL в формат для отображения
             img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
             ret, buffer = cv2.imencode('.jpg', img)
             encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
