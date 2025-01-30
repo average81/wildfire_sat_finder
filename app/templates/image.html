@@ -3,19 +3,52 @@
 {% block title %}Просмотр изображения - Сервис мониторинга{% endblock %}
 
 {% block content %}
-<h2>Просмотр области</h2>
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title">Параметры области</h5>
-        <p class="card-text">
-            Координаты: {{ coordinates.lat1 }}, {{ coordinates.lon1 }}
-        </p>
-        <p class="card-text">
-            Размер: {{ coordinates.width }} x {{ coordinates.height }}
-        </p>
+        <div class="row align-items-center mb-3">
+            <!-- Кнопка Назад -->
+            <div class="col-md-2">
+                <button class="btn btn-secondary" onclick="history.back()">← Назад</button>
+            </div>
+            
+            <!-- Заголовок и параметры -->
+            <div class="col-md-10">
+                <h2 class="mb-0">Просмотр области</h2>
+            </div>
+        </div>
+
+        <div class="row align-items-center">
+            <!-- Параметры области -->
+            <div class="col-md-6">
+                <h5 class="card-title">Параметры области</h5>
+                <p class="card-text mb-0">
+                    Координаты: {{ coordinates.lat1 }}, {{ coordinates.lon1 }}
+                </p>
+                <p class="card-text mb-0">
+                    Размер: {{ coordinates.width }} x {{ coordinates.height }}
+                </p>
+            </div>
+            
+            <!-- Инструкция -->
+            <div class="col-md-6">
+                <div class="alert alert-info mb-0">
+                    <span class="fw-bold me-2">Управление:</span>
+                    колесико мыши - масштаб (1x-4x),
+                    зажать ЛКМ - перемещение
+                </div>
+            </div>
+        </div>
+
         {% if encoded_img %}
-        <div class="mt-3">
-            <img src="data:image/jpeg;base64,{{ encoded_img }}" class="img-fluid" alt="Area image">
+        <div class="mt-3" style="border: 1px solid #dee2e6;">
+            <div id="imageContainer" style="max-width: 100%; min-height: 600px; height: auto; overflow: hidden; position: relative;">
+                <div id="imageDraggable" style="position: absolute; width: 100%; height: 100%;">
+                    <img src="data:image/jpeg;base64,{{ encoded_img }}" 
+                         alt="Area image"
+                         id="areaImage"
+                         style="position: absolute; max-width: 100%; max-height: 100%; object-fit: contain;">
+                </div>
+            </div>
         </div>
         {% else %}
         <div class="alert alert-info">
@@ -24,4 +57,119 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('imageContainer');
+    const draggable = document.getElementById('imageDraggable');
+    const img = document.getElementById('areaImage');
+    if (!img) return;
+
+    let scale = 1;
+    let panning = false;
+    let pointX = 0;
+    let pointY = 0;
+    let start = { x: 0, y: 0 };
+
+    // Вписываем изображение в контейнер при загрузке
+    img.onload = function() {
+        const containerRect = container.getBoundingClientRect();
+        
+        // Всегда прижимаем к левому верхнему углу
+        img.style.height = '100%';
+        img.style.width = 'auto';
+        pointX = 0;
+        pointY = 0;
+        updateImageTransform();
+    };
+
+    // Зум при прокрутке колесика мыши
+    container.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        const rect = container.getBoundingClientRect();
+        
+        const oldScale = scale;
+        if (e.deltaY < 0) {
+            scale = Math.min(scale * 1.1, 4);  // Максимальный масштаб 4x
+        } else {
+            scale = Math.max(scale / 1.1, 1);
+        }
+        
+        // При изменении масштаба прижимаем к левому краю
+        pointX = 0;
+        
+        constrainToBounds();
+        updateImageTransform();
+    });
+
+    // Перемещение изображения
+    draggable.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        start = { x: e.clientX - pointX, y: e.clientY - pointY };
+        panning = true;
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!panning) return;
+        
+        pointX = e.clientX - start.x;
+        pointY = e.clientY - start.y;
+        
+        constrainToBounds();
+        updateImageTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+        panning = false;
+    });
+
+    function constrainToBounds() {
+        const containerRect = container.getBoundingClientRect();
+        const scaledWidth = img.offsetWidth * scale;
+        const scaledHeight = img.offsetHeight * scale;
+
+        // Прижимаем к левому краю, если изображение не достигло правого края контейнера
+        if (scaledWidth <= containerRect.width || pointX > 0) {
+            pointX = 0;
+        } else {
+            // Не даём уйти дальше правого края
+            pointX = Math.max(containerRect.width - scaledWidth, pointX);
+        }
+
+        // Прижимаем к верхнему краю, если изображение не достигло нижнего края контейнера
+        if (scaledHeight <= containerRect.height || pointY > 0) {
+            pointY = 0;
+        } else {
+            // Не даём уйти дальше нижнего края
+            pointY = Math.max(containerRect.height - scaledHeight, pointY);
+        }
+
+        // Обновляем высоту контейнера при необходимости
+        const minHeight = 600;
+        container.style.height = `${minHeight}px`;  // Фиксированная высота для возможности скроллинга
+
+        // Проверяем только при начальной загрузке или уменьшении масштаба
+        if (scale <= 1) {
+            // Ограничиваем ширину изображения контейнером только при масштабе 1
+            if (scaledWidth > containerRect.width) {
+                const ratio = containerRect.width / scaledWidth;
+                scale = scale * ratio;
+            }
+        }
+    }
+
+    function updateImageTransform() {
+        draggable.style.transform = `translate(${pointX}px, ${pointY}px)`;
+        img.style.transform = `scale(${scale})`;
+    }
+
+    // Стили
+    draggable.style.cursor = 'move';
+    img.style.transformOrigin = '0 0';
+    draggable.style.transition = 'transform 0.1s';
+    img.style.transition = 'transform 0.1s';
+});
+</script>
 {% endblock %} 

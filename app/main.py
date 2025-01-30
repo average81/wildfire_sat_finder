@@ -141,7 +141,8 @@ async def get_area_image(
             "width": width,
             "height": height,
         },
-        "encoded_img": encoded_img
+        "encoded_img": encoded_img,
+        "active_page": "test"
     })
 
 @app.get("/tstimage")
