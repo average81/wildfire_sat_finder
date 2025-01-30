@@ -8,15 +8,20 @@
     <div class="card-body">
         <h5 class="card-title">Параметры области</h5>
         <p class="card-text">
-            Координаты: ({{ coordinates.lat1 }}, {{ coordinates.lon1 }}) - 
-            ({{ coordinates.lat2 }}, {{ coordinates.lon2 }})
+            Координаты: {{ coordinates.lat1 }}, {{ coordinates.lon1 }}
         </p>
         <p class="card-text">
-            Размер изображения: {{ size.width }}x{{ size.height }}
+            Размер: {{ coordinates.width }} x {{ coordinates.height }}
         </p>
-        <div class="alert alert-info">
-            Функционал получения изображения в разработке
+        {% if encoded_img %}
+        <div class="mt-3">
+            <img src="data:image/jpeg;base64,{{ encoded_img }}" class="img-fluid" alt="Area image">
         </div>
+        {% else %}
+        <div class="alert alert-info">
+            Изображение недоступно
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %} 

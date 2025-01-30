@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Настройка спутникового сервиса - Сервис мониторинга{% endblock %}
+
+{% block content %}
+<h2>Настройка спутникового сервиса</h2>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Выбор сервиса</h5>
+                <form id="satServiceForm">
+                    <div class="mb-3">
+                        <label class="form-label">API Key</label>
+                        <input type="text" class="form-control" name="api_key" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Base URL</label>
+                        <input type="text" class="form-control" name="base_url" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">User ID</label>
+                        <input type="text" class="form-control" name="user_id" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/sat_service.js"></script>
+{% endblock %} 
