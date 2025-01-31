@@ -2,6 +2,7 @@
 from sat_service.nasa import nasasat
 from sat_service.SentinelHub import sentinelsat
 from datetime import datetime
+from typing import Any, Dict, Tuple, Union
 #Спутниковые сервисы
 sat_services = [ nasasat, sentinelsat]
 
