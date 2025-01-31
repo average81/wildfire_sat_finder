@@ -1,11 +1,11 @@
-from roboflow_detector import roboflowdet
+from detector.roboflow_detector import roboflowdet
 
 detectors = [roboflowdet]
 
 class Anomaly_detector:
     def __init__(self):
         self.model = detectors[0]
-        self.model.confidence = 0.25
+        self.model.confidence = 0.02
 
     def get_models(self):
         return [det.get_model_name() for det in detectors]
@@ -17,3 +17,5 @@ class Anomaly_detector:
 
     def detect(self, image):
         return self.model.detect(image)
+
+obj_detector = Anomaly_detector()

@@ -67,7 +67,7 @@ class SentinelHubAPI:
                 CRS.WGS84
             )
             size = (700, 700)  # Размер изображения
-            start_date = end_date - timedelta(days=5)
+            start_date = end_date - timedelta(days=20)
             time_interval = (start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))  # Временной интервал
 
             # Скрипт для получения цветного изображения
