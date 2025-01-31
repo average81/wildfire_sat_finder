@@ -238,7 +238,7 @@ async def get_sat_service(request: Request):
                 }
             ]
         })
-    return templates.TemplateResponse("sat_service.html", {
+    return templates.TemplateResponse("index.html", {
         "request": request, 
         "active_page": "settings"
     })
@@ -301,4 +301,60 @@ async def get_detector(
             "recall": 0.87,
             "f1_score": 0.91
         }
+    })
+
+# Добавим новые эндпоинты для работы с сервисами
+@app.get("/sat_services")
+async def get_available_services(request: Request):
+    services = sat_img_service.get_services()
+    service_names = [type(s).__name__ for s in services]
+    
+    if (request.headers.get('Accept') == 'application/json' or 
+        request.headers.get('X-Requested-With') == 'XMLHttpRequest'):
+        return JSONResponse(content=service_names)
+    
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "active_page": "settings",
+        "services": service_names
+    })
+
+@app.post("/sat_services/active")
+async def set_active_service(request: Request):
+    try:
+        body = await request.json()
+        service_id = int(body.get('service_id'))
+        sat_img_service.Set_active_service(service_id)
+        result = {
+            "status": "success",
+            "message": f"Active service set to {service_id}"
+        }
+        
+        if request.headers.get('Accept') == 'application/json':
+            return JSONResponse(content=result)
+        
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "active_page": "settings",
+            "message": result["message"]
+        })
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/sat_services/active")
+async def get_active_service(request: Request):
+    active = sat_img_service.active_service
+    active_info = {
+        "active_service": type(active).__name__,
+        "id": sat_img_service.services.index(active)
+    }
+    
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content=active_info)
+    
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "active_page": "settings",
+        "active_service": active_info
     })

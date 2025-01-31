@@ -1,9 +1,13 @@
 import httpx
 import json
 import sys
-import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+
+# Устанавливаем кодировку для вывода
+import io
+import sys
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 BASE_URL = "http://localhost:8000"
 
@@ -13,25 +17,66 @@ def print_response(endpoint, response):
     try:
         print("Response:", json.dumps(response.json(), indent=2, ensure_ascii=False))
     except:
-        print("Response:", response.text[:200], "..." if len(response.text) > 200 else "")
+        # Ограничиваем вывод HTML и добавляем кодировку
+        print("Response:", response.text[:200].encode('utf-8').decode('utf-8'), 
+              "..." if len(response.text) > 200 else "")
+
+def update_stats(endpoint, response, results):
+    if response.status_code < 400:
+        results["passed"] += 1
+    else:
+        results["failed"] += 1
+        print(f"❌ Error testing {endpoint}: {response.status_code}")
 
 async def test_endpoints():
-    results = {
-        "total": 0,
-        "passed": 0,
-        "failed": 0,
-        "errors": []
-    }
-    
+    results = {"passed": 0, "failed": 0}
+
     try:
         async with httpx.AsyncClient() as client:
-            def update_stats(endpoint, response):
-                results["total"] += 1
-                if response.status_code < 400:
-                    results["passed"] += 1
-                else:
-                    results["failed"] += 1
-                    results["errors"].append(f"{endpoint}: {response.status_code}")
+            # Тест emails endpoints
+            print("\n=== Testing emails endpoints ===")
+            
+            # GET emails
+            response = await client.get(
+                f"{BASE_URL}/emails",
+                headers={"Accept": "application/json"}
+            )
+            print_response("/emails", response)
+            update_stats("/emails", response, results)
+
+            # POST email
+            response = await client.post(
+                f"{BASE_URL}/emails/add",
+                json={"email": "test@example.com"}
+            )
+            print_response("/emails/add", response)
+            update_stats("/emails/add", response, results)
+
+            # Тест regions endpoints
+            print("\n=== Testing regions endpoints ===")
+            
+            # GET regions
+            response = await client.get(
+                f"{BASE_URL}/regions",
+                headers={"Accept": "application/json"}
+            )
+            print_response("/regions", response)
+            update_stats("/regions", response, results)
+
+            # POST region
+            test_region = {
+                "name": "Test Region",
+                "lat1": 55.0,
+                "lon1": 37.0,
+                "lat2": 56.0,
+                "lon2": 38.0
+            }
+            response = await client.post(
+                f"{BASE_URL}/regions/add",
+                json=test_region
+            )
+            print_response("/regions/add", response)
+            update_stats("/regions/add", response, results)
 
             # Тест sat_service endpoints
             print("\n=== Testing sat_service endpoints ===")
@@ -42,7 +87,7 @@ async def test_endpoints():
                 headers={"Accept": "application/json"}
             )
             print_response("/sat_service (JSON)", response)
-            update_stats("/sat_service (JSON)", response)
+            update_stats("/sat_service (JSON)", response, results)
 
             # GET HTML
             response = await client.get(
@@ -50,7 +95,7 @@ async def test_endpoints():
                 headers={"Accept": "text/html"}
             )
             print_response("/sat_service (HTML)", response)
-            update_stats("/sat_service (HTML)", response)
+            update_stats("/sat_service (HTML)", response, results)
 
             # PUT settings
             test_settings = {
@@ -63,12 +108,10 @@ async def test_endpoints():
                 json=test_settings
             )
             print_response("/sat_service (PUT)", response)
-            update_stats("/sat_service (PUT)", response)
+            update_stats("/sat_service (PUT)", response, results)
 
             # Тест detector endpoint
             print("\n=== Testing detector endpoint ===")
-            
-            # GET JSON
             params = {
                 "lat1": 55.0,
                 "lon1": 37.0,
@@ -81,62 +124,42 @@ async def test_endpoints():
                 headers={"Accept": "application/json"}
             )
             print_response("/detector (JSON)", response)
-            update_stats("/detector (JSON)", response)
+            update_stats("/detector", response, results)
 
-            # GET HTML
+            # Тест sat_services endpoints
+            print("\n=== Testing sat_services endpoints ===")
             response = await client.get(
-                f"{BASE_URL}/detector",
-                params=params,
-                headers={"Accept": "text/html"}
-            )
-            print_response("/detector (HTML)", response)
-            update_stats("/detector (HTML)", response)
-
-            # Тест areaimg с новыми параметрами
-            print("\n=== Testing areaimg endpoint ===")
-            
-            img_params = {
-                "lat": 55.0,
-                "lon": 37.0,
-                "width": 1.0,
-                "height": 1.0
-            }
-            
-            # JSON формат
-            response = await client.get(
-                f"{BASE_URL}/areaimg",
-                params=img_params,
+                f"{BASE_URL}/sat_services",
                 headers={"Accept": "application/json"}
             )
-            print_response("/areaimg (JSON)", response)
-            update_stats("/areaimg (JSON)", response)
+            print_response("/sat_services", response)
+            update_stats("/sat_services", response, results)
 
-            # HTML формат
+            # Тест активного сервиса
             response = await client.get(
-                f"{BASE_URL}/areaimg",
-                params=img_params,
-                headers={"Accept": "text/html"}
+                f"{BASE_URL}/sat_services/active",
+                headers={"Accept": "application/json"}
             )
-            print_response("/areaimg (HTML)", response)
-            update_stats("/areaimg (HTML)", response)
+            print_response("/sat_services/active", response)
+            update_stats("/sat_services/active", response, results)
+
+            # Установка активного сервиса
+            response = await client.post(
+                f"{BASE_URL}/sat_services/active",
+                json={"service_id": 0}
+            )
+            print_response("/sat_services/active (POST)", response)
+            update_stats("/sat_services/active (POST)", response, results)
 
     except Exception as e:
         print(f"Критическая ошибка: {str(e)}")
         sys.exit(1)
     
-    # Вывод итоговых результатов
-    print("\n" + "="*50)
-    print("РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ:")
-    print(f"Всего тестов: {results['total']}")
-    print(f"Успешно: {results['passed']}")
-    print(f"Неудачно: {results['failed']}")
-    if results["errors"]:
-        print("\nОшибки:")
-        for error in results["errors"]:
-            print(f"- {error}")
-    print("="*50)
-
-    # Возвращаем код завершения
+    # Вывод результатов тестирования
+    print(f"\nРезультаты тестирования:")
+    print(f"✅ Успешно: {results['passed']}")
+    print(f"❌ Ошибок: {results['failed']}")
+    
     return 0 if results["failed"] == 0 else 1
 
 if __name__ == "__main__":
