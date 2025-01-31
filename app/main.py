@@ -9,6 +9,7 @@ from sat_service.sat_service import sat_img_service
 import cv2
 import numpy as np
 import base64
+from detector.detector import obj_detector
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
@@ -37,7 +38,7 @@ class DetectorSettings(BaseModel):
     score_threshold: float
     min_area: float
 
-# Временное хранилище данных
+# Временное хранилище данных (в реальном приложении использовать базу данных)
 emails = []  # список объектов
 regions = []  # список объектов
 
@@ -86,7 +87,7 @@ async def delete_email(email_id: int):
 @app.get("/regions")
 async def get_regions(request: Request):
     if request.headers.get('Accept') == 'application/json':
-        return JSONResponse(content=regions)  # возвращаем список напрямую
+        return JSONResponse(content=regions)
     return templates.TemplateResponse("regions.html", {"request": request, "active_page": "regions"})
 
 @app.post("/regions/add")
@@ -110,6 +111,46 @@ async def get_area_image(
     width: float,
     height: float
 ):
+    objects = []
+    try:
+        # Получаем изображение через сервис
+        img = sat_img_service.get_image(lat, lon, width, height)
+        if img:
+            # Конвертируем изображение из PIL в формат для отображения
+            img2 = np.array(img.convert("RGB"))
+            img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
+            #print(np.max(img))
+            if np.max(img) > 0:
+                img = img * (255.0 / np.max(img))
+                img = img.astype(np.uint8)
+                img2 = img2 * (255.0 / np.max(img))
+                img2 = img2.astype(np.uint8)
+            #Детектируем аномалии
+
+            prediction = obj_detector.detect(img2)
+            if len(prediction) > 0:
+                for pred in prediction:
+                    cv2.rectangle(img, (pred['box'][0], pred['box'][1]), (pred['box'][2], pred['box'][3]), (0, 255, 0), 2)
+                    # Устанавливаем шрифт, размер и цвет текста
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    font_scale = 1
+                    color = (255, 0, 0)
+                    thickness = 2
+
+                    # Добавляем текст на изображение
+                    cv2.putText(img, str(pred['type_id']), (pred['box'][0], pred['box'][1] - 3), font, font_scale, color, thickness, cv2.LINE_AA)
+                    #Создаем список объектов на изображении
+                    objects.append(pred)
+            ret, buffer = cv2.imencode('.jpg', img)
+            encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
+        else:
+            encoded_img = None
+    except Exception as e:
+        print(f"Error getting image: {str(e)}")
+        encoded_img = None
+
+
+
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
             "coordinates": {
@@ -119,19 +160,7 @@ async def get_area_image(
             "message": "Image retrieval not implemented yet"
         })
 
-    try:
-        # Получаем изображение через сервис
-        img = sat_img_service.get_image(lat, lon, width, height)
-        if img:
-            # Конвертируем изображение из PIL в формат для отображения
-            img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
-            ret, buffer = cv2.imencode('.jpg', img)
-            encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
-        else:
-            encoded_img = None
-    except Exception as e:
-        print(f"Error getting image: {str(e)}")
-        encoded_img = None
+
 
     return templates.TemplateResponse("image.html", {
         "request": request,
@@ -140,6 +169,7 @@ async def get_area_image(
             "lon1": lon,
             "width": width,
             "height": height,
+            "objects": objects
         },
         "encoded_img": encoded_img,
         "active_page": "test"
