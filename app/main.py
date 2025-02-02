@@ -11,7 +11,7 @@ import cv2
 import numpy as np
 import base64
 from detector.detector import obj_detector
-from repository.repository import wildfire_params_repository
+from repository.repository import *
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
@@ -19,16 +19,7 @@ templates = Jinja2Templates(directory="app/templates")
 # Подключение статических файлов
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Модели данных
-class Email(BaseModel):
-    email: str
 
-class Region(BaseModel):
-    name: str
-    lat1: float
-    lon1: float
-    lat2: float
-    lon2: float
 
 class SatServiceSettings(BaseModel):
     api_key: str
@@ -242,6 +233,7 @@ async def test_detect(request: Request):
 
 @app.get("/areamap/{region_id}")
 async def get_area_map(request: Request, region_id: int):
+    regions = obj_detector.get_regions()
     if region_id > len(regions):
         raise HTTPException(status_code=404, detail="Region not found")
     region = regions[region_id - 1]

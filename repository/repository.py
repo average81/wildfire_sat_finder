@@ -1,5 +1,15 @@
-from abc import ABC, abstractmethod
+from pydantic import BaseModel
 
+# Модели данных
+class Email(BaseModel):
+    email: str
+
+class Region(BaseModel):
+    name: str
+    lat1: float
+    lon1: float
+    lat2: float
+    lon2: float
 
 # Временное хранилище данных (в реальном приложении использовать базу данных)
 class InmemoryRepository:
