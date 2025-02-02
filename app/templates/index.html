@@ -9,6 +9,16 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Настройки сервиса получения изображений</h5>
+                
+                <!-- Выбор сервиса -->
+                <div class="mb-4">
+                    <label class="form-label">Выберите сервис</label>
+                    <select class="form-select" id="serviceSelect">
+                        <!-- Опции будут добавлены через JavaScript -->
+                    </select>
+                </div>
+
+                <!-- Форма настроек -->
                 <form id="satServiceForm">
                     <div class="mb-3">
                         <label class="form-label">API Key</label>
@@ -19,8 +29,8 @@
                         <input type="text" class="form-control" name="base_url">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Timeout</label>
-                        <input type="number" class="form-control" name="timeout">
+                        <label class="form-label">User ID</label>
+                        <input type="text" class="form-control" name="user_id">
                     </div>
                     <button type="submit" class="btn btn-primary">Сохранить</button>
                 </form>

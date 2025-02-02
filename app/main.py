@@ -17,6 +17,8 @@ templates = Jinja2Templates(directory="app/templates")
 # Подключение статических файлов
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+#Изображение для тестирования детектора
+tstimage = None
 
 # Модели данных
 class Email(BaseModel):
@@ -41,6 +43,19 @@ class DetectorSettings(BaseModel):
 # Временное хранилище данных (в реальном приложении использовать базу данных)
 emails = []  # список объектов
 regions = []  # список объектов
+
+# Ф-я нанесения рамок на изображение
+def draw_box(img, box, id, color=(0, 255, 0), thickness=2):
+    cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]), color, thickness)
+    # Устанавливаем шрифт, размер и цвет текста
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1
+    color = (255, 0, 0)
+    thickness = 2
+
+    # Добавляем текст на изображение
+    cv2.putText(img, str(id), (box[0], box[1] - 3), font, font_scale, color, thickness, cv2.LINE_AA)
+    return img
 
 # Основной маршрут
 @app.get("/")
@@ -119,26 +134,19 @@ async def get_area_image(
             # Конвертируем изображение из PIL в формат для отображения
             img2 = np.array(img.convert("RGB"))
             img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
-            #print(np.max(img))
-            if np.max(img) > 0:
-                img = img * (255.0 / np.max(img))
+            max = np.max(img)
+            if max > 0:
+                img = img * (255.0 / max)
                 img = img.astype(np.uint8)
-                img2 = img2 * (255.0 / np.max(img))
-                img2 = img2.astype(np.uint8)
+                #img2 = img2 * (255.0 / max)
+                #img2 = img2.astype(np.uint8)
             #Детектируем аномалии
-
             prediction = obj_detector.detect(img2)
             if len(prediction) > 0:
-                for pred in prediction:
-                    cv2.rectangle(img, (pred['box'][0], pred['box'][1]), (pred['box'][2], pred['box'][3]), (0, 255, 0), 2)
-                    # Устанавливаем шрифт, размер и цвет текста
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    font_scale = 1
-                    color = (255, 0, 0)
-                    thickness = 2
 
-                    # Добавляем текст на изображение
-                    cv2.putText(img, str(pred['type_id']), (pred['box'][0], pred['box'][1] - 3), font, font_scale, color, thickness, cv2.LINE_AA)
+                for pred in prediction:
+                    draw_box(img, pred['box'], pred['type_id'], (0, 255, 0), 2)
+
                     #Создаем список объектов на изображении
                     objects.append(pred)
             ret, buffer = cv2.imencode('.jpg', img)
@@ -189,13 +197,49 @@ async def test_page(request: Request):
 
 @app.post("/tstimage")
 async def upload_test_image(file: UploadFile = File(...)):
-    # Здесь будет логика сохранения тестового изображения
+    #Преобразуем изображение в jpg
+    img = cv2.imdecode(np.frombuffer(file.file.read(), np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        return {"message": "Test image not found"}
+    img2 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    #Сохраняем тестовое изображение в файл
+    cv2.imwrite("testimage.jpg", img)
     return {"filename": file.filename}
 
 @app.get("/tstdetect")
-async def test_detect():
-    # Здесь будет логика работы детектора
-    return {"message": "Detection not implemented yet"}
+async def test_detect(request: Request):
+    # Открываем тестовое изображение, если оно есть
+    img = cv2.imread("testimage.jpg")
+    if img is None:
+        return {"message": "Test image not found"}
+    img2 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    # Запускаем детектор
+    objects = []
+    prediction = obj_detector.detect(img2)
+    for pred in prediction:
+        draw_box(img, pred['box'], pred['type_id'], (0, 255, 0), 2)
+        #Создаем список объектов на изображении
+        objects.append(pred)
+    ret, buffer = cv2.imencode('.jpg', img)
+    encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
+
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content={
+            "message": "Image retrieval not implemented yet"
+        })
+
+    return templates.TemplateResponse("image.html", {
+        "request": request,
+        "coordinates": {
+            "lat1": 0,
+            "lon1": 0,
+            "width": 0,
+            "height": 0,
+            "objects": objects
+        },
+        "encoded_img": encoded_img,
+        "active_page": "test"
+    })
 
 @app.get("/areamap/{region_id}")
 async def get_area_map(request: Request, region_id: int):
@@ -238,7 +282,7 @@ async def get_sat_service(request: Request):
                 }
             ]
         })
-    return templates.TemplateResponse("sat_service.html", {
+    return templates.TemplateResponse("index.html", {
         "request": request, 
         "active_page": "settings"
     })
@@ -301,4 +345,60 @@ async def get_detector(
             "recall": 0.87,
             "f1_score": 0.91
         }
+    })
+
+# Добавим новые эндпоинты для работы с сервисами
+@app.get("/sat_services")
+async def get_available_services(request: Request):
+    services = sat_img_service.get_services()
+    service_names = [type(s).__name__ for s in services]
+    
+    if (request.headers.get('Accept') == 'application/json' or 
+        request.headers.get('X-Requested-With') == 'XMLHttpRequest'):
+        return JSONResponse(content=service_names)
+    
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "active_page": "settings",
+        "services": service_names
+    })
+
+@app.post("/sat_services/active")
+async def set_active_service(request: Request):
+    try:
+        body = await request.json()
+        service_id = int(body.get('service_id'))
+        sat_img_service.Set_active_service(service_id)
+        result = {
+            "status": "success",
+            "message": f"Active service set to {service_id}"
+        }
+        
+        if request.headers.get('Accept') == 'application/json':
+            return JSONResponse(content=result)
+        
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "active_page": "settings",
+            "message": result["message"]
+        })
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/sat_services/active")
+async def get_active_service(request: Request):
+    active = sat_img_service.active_service
+    active_info = {
+        "active_service": type(active).__name__,
+        "id": sat_img_service.services.index(active)
+    }
+    
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content=active_info)
+    
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "active_page": "settings",
+        "active_service": active_info
     })
