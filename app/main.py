@@ -10,15 +10,13 @@ import cv2
 import numpy as np
 import base64
 from detector.detector import obj_detector
+from repository.repository import wildfire_params_repository
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
 
 # Подключение статических файлов
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-#Изображение для тестирования детектора
-tstimage = None
 
 # Модели данных
 class Email(BaseModel):
@@ -40,9 +38,7 @@ class DetectorSettings(BaseModel):
     score_threshold: float
     min_area: float
 
-# Временное хранилище данных (в реальном приложении использовать базу данных)
-emails = []  # список объектов
-regions = []  # список объектов
+
 
 # Ф-я нанесения рамок на изображение
 def draw_box(img, box, id, color=(0, 255, 0), thickness=2):
@@ -83,38 +79,40 @@ async def root(request: Request):
 @app.get("/emails")
 async def get_emails(request: Request):
     if request.headers.get('Accept') == 'application/json':
-        return JSONResponse(content=emails)  # возвращаем список
+        return JSONResponse(content=wildfire_params_repository.get_emails())  # возвращаем список
     return templates.TemplateResponse("emails.html", {"request": request, "active_page": "emails"})
 
 @app.post("/emails/add")
 async def add_email(email: Email):
-    emails.append(email.email)  # Просто добавляем email в список
-    return {"id": len(emails) - 1, "email": email.email}  # Возвращаем индекс как id
+    id = wildfire_params_repository.add_email(email.email)  # Просто добавляем email в список
+    return {"id": id, "email": email.email}  # Возвращаем индекс как id
 
 @app.delete("/emails/{email_id}")
 async def delete_email(email_id: int):
-    if email_id >= len(emails):
-        raise HTTPException(status_code=404, detail="Email not found")
-    del emails[email_id]
+    try:
+        wildfire_params_repository.delete(email_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=e)
     return {"message": "Email deleted"}
 
 # Управление регионами
 @app.get("/regions")
 async def get_regions(request: Request):
     if request.headers.get('Accept') == 'application/json':
-        return JSONResponse(content=regions)
+        return JSONResponse(content=wildfire_params_repository.get_regions())  # возвращаем список
     return templates.TemplateResponse("regions.html", {"request": request, "active_page": "regions"})
 
 @app.post("/regions/add")
 async def add_region(region: Region):
-    regions.append(region.dict())  # добавляем регион в список
-    return {"id": len(regions) - 1, "region": region.dict()}
+    id = wildfire_params_repository.add_region(region.dict())  # добавляем регион в список
+    return {"id": id, "region": region.dict()}
 
 @app.delete("/regions/{region_id}")
 async def delete_region(region_id: int):
-    if region_id >= len(regions):
-        raise HTTPException(status_code=404, detail="Region not found")
-    del regions[region_id]
+    try:
+        wildfire_params_repository.delete_region(region_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=e)
     return {"message": "Region deleted"}
 
 # Работа с изображениями
