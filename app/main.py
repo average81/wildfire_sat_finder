@@ -2,6 +2,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request, Response, File, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
@@ -74,7 +75,7 @@ async def root(request: Request):
         })
     # Возвращаем HTML страницу с настройками
     return templates.TemplateResponse("index.html", {"request": request, "active_page": "monitoring"})
-
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Управление email адресами
 @app.get("/emails")
 async def get_emails(request: Request):
@@ -90,7 +91,7 @@ async def add_email(email: Email):
 @app.delete("/emails/{email_id}")
 async def delete_email(email_id: int):
     try:
-        wildfire_params_repository.delete(email_id)
+        wildfire_params_repository.remove_email(email_id)
     except Exception as e:
         raise HTTPException(status_code=404, detail=e)
     return {"message": "Email deleted"}
@@ -110,7 +111,7 @@ async def add_region(region: Region):
 @app.delete("/regions/{region_id}")
 async def delete_region(region_id: int):
     try:
-        wildfire_params_repository.delete_region(region_id)
+        wildfire_params_repository.remove_region(region_id)
     except Exception as e:
         raise HTTPException(status_code=404, detail=e)
     return {"message": "Region deleted"}
