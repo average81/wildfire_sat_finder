@@ -55,7 +55,7 @@ class Image_service:
         return self.active_service.fetch_image(latitude, longitude, angle_width, angle_height,time)
     #Настройка параметров
     def set_params(self, settings: SatServiceSettings):
-        self.active_service.set_params(settings.api_key, settings.base_url, settings.user_id)
+        self.active_service.set_params(settings.api_key, settings.user_id)
 
 
 sat_img_service = Image_service()

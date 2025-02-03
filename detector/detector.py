@@ -1,4 +1,10 @@
 from detector.roboflow_detector import roboflowdet
+from pydantic import BaseModel
+
+
+class DetectorSettings(BaseModel):
+    score_threshold: float
+    min_area: float
 
 detectors = [roboflowdet]
 

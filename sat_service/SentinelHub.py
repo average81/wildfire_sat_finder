@@ -117,6 +117,6 @@ class SentinelHubAPI:
 
     #Настройка параметров
     def set_params(self, *args):
-        self.config.sh_client_id = args[2]
+        self.config.sh_client_id = args[1]
         self.config.sh_client_secret = args[0]
 sentinelsat = SentinelHubAPI()

@@ -1,10 +1,9 @@
-import httpx
 from fastapi import FastAPI, HTTPException, Request, Response, File, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
-from pydantic import BaseModel
+from searcher.searcher import fire_searcher
 from fastapi.staticfiles import StaticFiles
 from sat_service.sat_service import sat_img_service, SatServiceSettings
 import cv2
@@ -19,13 +18,6 @@ templates = Jinja2Templates(directory="app/templates")
 # Подключение статических файлов
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-
-
-
-
-class DetectorSettings(BaseModel):
-    score_threshold: float
-    min_area: float
 
 
 
@@ -94,12 +86,14 @@ async def get_regions(request: Request):
 @app.post("/regions/add")
 async def add_region(region: Region):
     id = wildfire_params_repository.add_region(region.dict())  # добавляем регион в список
+    fire_searcher.search_area_update()
     return {"id": id, "region": region.dict()}
 
 @app.delete("/regions/{region_id}")
 async def delete_region(region_id: int):
     try:
         wildfire_params_repository.remove_region(region_id)
+        fire_searcher.search_area_update()
     except Exception as e:
         raise HTTPException(status_code=404, detail=e)
     return {"message": "Region deleted"}
