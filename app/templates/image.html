@@ -69,7 +69,7 @@
                                 {% for obj in coordinates.objects %}
                                 <tr>
                                     <td>{{ obj.id }}</td>
-                                    <td>{{ obj.type_id }}</td>
+                                    <td>{{ obj.type }}</td>
                                     <td>{{ "%.2f"|format(obj.score) }}</td>
                                 </tr>
                                 {% endfor %}
