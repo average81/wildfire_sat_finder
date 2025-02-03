@@ -23,7 +23,6 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 class SatServiceSettings(BaseModel):
     api_key: str
-    base_url: str
     user_id: str
 
 class DetectorSettings(BaseModel):
@@ -266,7 +265,6 @@ async def get_sat_service(request: Request):
         return JSONResponse(content={
             "current_settings": {
                 "api_key": "current_key",
-                "base_url": "current_url",
                 "user_id": "current_user"
             },
             "available_services": [
