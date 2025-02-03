@@ -100,7 +100,6 @@ async def test_endpoints():
             # PUT settings
             test_settings = {
                 "api_key": "test_key",
-                "base_url": "test_url",
                 "user_id": "test_user"
             }
             response = await client.put(
