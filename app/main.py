@@ -131,13 +131,14 @@ async def get_area_image(
             # Детектируем аномалии
             prediction = obj_detector.detect(img2)
             if len(prediction) > 0:
-                for i, pred in enumerate(prediction):
+                for pred in prediction:
                     draw_box(img, pred['box'], pred['type_id'], (0, 255, 0), 2)
 
                     # Создаем список объектов на изображении с доступной информацией
                     objects.append({
-                        'id': i,  # Номер объекта начинается с 0
+                        'id': pred['type_id'],  # Используем type_id из результатов детектора
                         'type_id': pred['type_id'],  # ID типа
+                        'type': pred['type_name'],  # Название типа объекта
                         'score': pred['score'],  # Вероятность
                         'box': pred['box']  # Координаты рамки
                     })
@@ -207,12 +208,13 @@ async def test_detect(request: Request):
     # Запускаем детектор
     objects = []
     prediction = obj_detector.detect(img2)
-    for i, pred in enumerate(prediction):
+    for pred in prediction:
         draw_box(img, pred['box'], pred['type_id'], (0, 255, 0), 2)
         # Создаем список объектов на изображении с доступной информацией
         objects.append({
-            'id': i,
+            'id': pred['type_id'],
             'type_id': pred['type_id'],
+            'type': pred['type_name'],
             'score': pred['score'],
             'box': pred['box']
         })
