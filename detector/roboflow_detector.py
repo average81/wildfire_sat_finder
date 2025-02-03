@@ -47,7 +47,6 @@ class RoboFlow_detector:
         try:
             pil_image = Image.fromarray(image)
             pil_image.save('tmp.jpg')
-
             # Запускаем инференс
             result = self.client.infer('tmp.jpg', model_id=roboflow_models[self.model_num]["model_id"])
             #print(result)
@@ -60,7 +59,8 @@ class RoboFlow_detector:
                 y1 = int(pred["y"] - pred["height"] / 2)
                 x2 = int(pred["x"] + pred["width"] / 2)
                 y2 = int(pred["y"] + pred["height"] / 2)
-                ret.append({'type_name': pred['class'], 'type_id': i, 'score': pred['confidence'], 'box': [x1, y1, x2, y2]})
+                if pred['confidence'] >= self.confidence:
+                    ret.append({'type_name': pred['class'], 'type_id': i, 'score': pred['confidence'], 'box': [x1, y1, x2, y2]})
             return ret
 
         except Exception as e:

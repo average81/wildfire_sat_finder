@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
-from sat_service.sat_service import sat_img_service
+from sat_service.sat_service import sat_img_service, SatServiceSettings
 import cv2
 import numpy as np
 import base64
@@ -21,10 +21,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
 
-class SatServiceSettings(BaseModel):
-    api_key: str
-    base_url: str
-    user_id: str
+
 
 class DetectorSettings(BaseModel):
     score_threshold: float
@@ -280,7 +277,7 @@ async def get_sat_service(request: Request):
 
 @app.put("/sat_service")
 async def configure_sat_service(settings: SatServiceSettings):
-    # Здесь будет логика настройки сервиса спутниковых снимков
+    sat_img_service.set_params(settings)
     return settings
 
 @app.get("/detector")
@@ -336,6 +333,31 @@ async def get_detector(
             "recall": 0.87,
             "f1_score": 0.91
         }
+    })
+
+@app.put("/detector")
+async def put_detector(
+        request: Request,
+):
+    #Получаем параметры из тела сообщения
+    body = await request.json()
+    score_threshold = body.get('score_threshold')
+    min_area = body.get('min_area')
+    obj_detector.model.confidence = score_threshold
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content={
+            "score_threshold": score_threshold,
+            "min_area": min_area
+        })
+
+    result = {
+        "status": "success",
+        "message": f"Score threshold set to {score_threshold}, min area set to {min_area}"
+    }
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "active_page": "settings",
+        "message": result["message"]
     })
 
 # Добавим новые эндпоинты для работы с сервисами

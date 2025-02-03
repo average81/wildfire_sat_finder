@@ -56,5 +56,8 @@ class NASAAPI:
             raise requests.HTTPError(f"HTTP ошибка: {http_err}") from http_err
         except Exception as e:
             raise ValueError(f"Не удалось получить или обработать изображение: {str(e)}") from e
+    #Настройка параметров
+    def set_params(self, *args):
+        self.api_key = args[0]
 
 nasasat = NASAAPI()

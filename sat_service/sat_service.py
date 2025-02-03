@@ -3,8 +3,14 @@ from sat_service.nasa import nasasat
 from sat_service.SentinelHub import sentinelsat
 from datetime import datetime
 from typing import Any, Dict, Tuple, Union
+from pydantic import BaseModel
 #Спутниковые сервисы
 sat_services = [ nasasat, sentinelsat]
+
+class SatServiceSettings(BaseModel):
+    api_key: str
+    base_url: str
+    user_id: str
 
 def validate_coordinates(lat: float, lon: float) -> Tuple[bool, str]:
     """
@@ -47,5 +53,9 @@ class Image_service:
         if not val:
             raise Exception(err )
         return self.active_service.fetch_image(latitude, longitude, angle_width, angle_height,time)
+    #Настройка параметров
+    def set_params(self, settings: SatServiceSettings):
+        self.active_service.set_params(settings.api_key, settings.base_url, settings.user_id)
+
 
 sat_img_service = Image_service()

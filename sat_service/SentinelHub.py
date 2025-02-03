@@ -115,4 +115,8 @@ class SentinelHubAPI:
         except Exception as e:
             raise ValueError(f"Ошибка получения изображения из Sentinel Hub: {str(e)}") from e
 
+    #Настройка параметров
+    def set_params(self, *args):
+        self.config.sh_client_id = args[2]
+        self.config.sh_client_secret = args[0]
 sentinelsat = SentinelHubAPI()
