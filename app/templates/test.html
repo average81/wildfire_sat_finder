@@ -7,24 +7,21 @@
 <p class="lead mb-4">Проверка работы детектора</p>
 
 <!-- Переключатель режимов -->
-<div class="btn-group mb-4" role="group">
-    <input type="radio" class="btn-check" name="test_mode" id="file_mode" checked>
-    <label class="btn btn-outline-primary" for="file_mode">Тест по файлу</label>
-    
-    <input type="radio" class="btn-check" name="test_mode" id="coord_mode">
-    <label class="btn btn-outline-primary" for="coord_mode">Тест по координатам</label>
+<div class="btn-group mb-4">
+    <a href="#" class="btn btn-primary" id="fileTestBtn">Тест по файлу</a>
+    <a href="#" class="btn btn-outline-primary" id="coordTestBtn">Тест по координатам</a>
 </div>
 
 <!-- Форма для загрузки файла -->
-<div id="file_form" class="row mt-4">
+<div id="fileUpload" class="row mt-4">
     <div class="col-md-6">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Загрузка тестового изображения</h5>
-                <form id="uploadForm">
+                <form id="uploadForm" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label class="form-label">Выберите изображение</label>
-                        <input type="file" class="form-control" name="file" accept="image/*">
+                        <input type="file" class="form-control" name="file" accept="image/*" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Загрузить</button>
                 </form>
@@ -34,7 +31,7 @@
 </div>
 
 <!-- Форма для координат -->
-<div id="coord_form" class="row mt-4" style="display: none;">
+<div id="coordInput" class="row mt-4" style="display: none;">
     <div class="col-md-6">
         <div class="card">
             <div class="card-body">
@@ -67,54 +64,11 @@
     </div>
 </div>
 
-<!-- Результаты -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Результат детекции</h5>
-                <div id="detectionResult">
-                    <!-- Здесь будет результат детекции -->
-                </div>
-            </div>
-        </div>
-    </div>
+<div id="result" class="mt-4">
+    <!-- Здесь будет результат -->
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const fileMode = document.getElementById('file_mode');
-    const coordMode = document.getElementById('coord_mode');
-    const fileForm = document.getElementById('file_form');
-    const coordFormDiv = document.getElementById('coord_form');
-    
-    // Переключение режимов
-    fileMode.addEventListener('change', function() {
-        fileForm.style.display = 'block';
-        coordFormDiv.style.display = 'none';
-    });
-    
-    coordMode.addEventListener('change', function() {
-        fileForm.style.display = 'none';
-        coordFormDiv.style.display = 'block';
-    });
-    
-    // Обработка формы координат
-    const coordForm = document.getElementById('coordForm');
-    if (coordForm) {
-        coordForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(coordForm);
-            const params = new URLSearchParams();
-            for (const [key, value] of formData.entries()) {
-                params.append(key, value);
-            }
-            window.location.href = `/areaimg?${params.toString()}`;
-        });
-    }
-});
-</script>
-<script src="/static/js/test.js"></script>
+<script src="/static/js/test.js?v=2"></script>
 {% endblock %} 

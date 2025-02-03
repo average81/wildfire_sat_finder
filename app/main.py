@@ -128,16 +128,21 @@ async def get_area_image(
             if max > 0:
                 img = img * (255.0 / max)
                 img = img.astype(np.uint8)
-                #img2 = img2 * (255.0 / max)
-                #img2 = img2.astype(np.uint8)
-            #Детектируем аномалии
+
+            # Детектируем аномалии
             prediction = obj_detector.detect(img2)
             if len(prediction) > 0:
-                for pred in prediction:
+                for i, pred in enumerate(prediction):
                     draw_box(img, pred['box'], pred['type_id'], (0, 255, 0), 2)
 
-                    #Создаем список объектов на изображении
-                    objects.append(pred)
+                    # Создаем список объектов на изображении с доступной информацией
+                    objects.append({
+                        'id': i,  # Номер объекта начинается с 0
+                        'type_id': pred['type_id'],  # ID типа
+                        'score': pred['score'],  # Вероятность
+                        'box': pred['box']  # Координаты рамки
+                    })
+
             ret, buffer = cv2.imencode('.jpg', img)
             encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
         else:
@@ -146,18 +151,15 @@ async def get_area_image(
         print(f"Error getting image: {str(e)}")
         encoded_img = None
 
-
-
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
             "coordinates": {
                 "lat1": lat, "lon1": lon,
                 "width": width, "height": height
             },
-            "message": "Image retrieval not implemented yet"
+            "objects": objects,
+            "encoded_img": encoded_img
         })
-
-
 
     return templates.TemplateResponse("image.html", {
         "request": request,
@@ -166,7 +168,7 @@ async def get_area_image(
             "lon1": lon,
             "width": width,
             "height": height,
-            "objects": objects
+            "objects": objects  # Передаем полный список объектов
         },
         "encoded_img": encoded_img,
         "active_page": "test"
@@ -202,19 +204,27 @@ async def test_detect(request: Request):
     if img is None:
         return {"message": "Test image not found"}
     img2 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    
     # Запускаем детектор
     objects = []
     prediction = obj_detector.detect(img2)
-    for pred in prediction:
+    for i, pred in enumerate(prediction):
         draw_box(img, pred['box'], pred['type_id'], (0, 255, 0), 2)
-        #Создаем список объектов на изображении
-        objects.append(pred)
+        # Создаем список объектов на изображении с доступной информацией
+        objects.append({
+            'id': i,
+            'type_id': pred['type_id'],
+            'score': pred['score'],
+            'box': pred['box']
+        })
+
     ret, buffer = cv2.imencode('.jpg', img)
     encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
 
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
-            "message": "Image retrieval not implemented yet"
+            "objects": objects,
+            "encoded_img": encoded_img
         })
 
     return templates.TemplateResponse("image.html", {
@@ -224,7 +234,7 @@ async def test_detect(request: Request):
             "lon1": 0,
             "width": 0,
             "height": 0,
-            "objects": objects
+            "objects": objects  # Передаем полный список объектов
         },
         "encoded_img": encoded_img,
         "active_page": "test"
