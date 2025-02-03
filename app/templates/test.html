@@ -6,77 +6,63 @@
 <h2>Тестирование детектора</h2>
 <p class="lead mb-4">Проверка работы детектора</p>
 
-<!-- Переключатель режимов -->
-<div class="btn-group mb-4" role="group">
-    <input type="radio" class="btn-check" name="test_mode" id="file_mode" checked>
-    <label class="btn btn-outline-primary" for="file_mode">Тест по файлу</label>
-    
-    <input type="radio" class="btn-check" name="test_mode" id="coord_mode">
-    <label class="btn btn-outline-primary" for="coord_mode">Тест по координатам</label>
+<div class="btn-group mb-4">
+    <button class="btn btn-primary" onclick="showFileTest()">Тест по файлу</button>
+    <button class="btn btn-outline-primary" onclick="showCoordTest()">Тест по координатам</button>
 </div>
 
 <!-- Форма для загрузки файла -->
-<div id="file_form" class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Загрузка тестового изображения</h5>
-                <form id="uploadForm">
-                    <div class="mb-3">
-                        <label class="form-label">Выберите изображение</label>
-                        <input type="file" class="form-control" name="file" accept="image/*">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Загрузить</button>
-                </form>
-            </div>
+<div id="fileTestForm">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Загрузка тестового изображения</h5>
+            <p class="card-text">Выберите изображение</p>
+            <form action="/tstimage" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <input class="form-control" type="file" name="file" id="formFile" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary">Загрузить</button>
+            </form>
         </div>
     </div>
 </div>
 
 <!-- Форма для координат -->
-<div id="coord_form" class="row mt-4" style="display: none;">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Координаты области</h5>
-                <form id="coordForm">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Широта</label>
-                            <input type="number" step="0.000001" class="form-control" name="lat" value="55.0" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Долгота</label>
-                            <input type="number" step="0.000001" class="form-control" name="lon" value="37.0" required>
-                        </div>
+<div id="coordTestForm" style="display: none;">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Координаты области</h5>
+            <form action="/detector" method="get">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Широта 1</label>
+                        <input type="number" step="0.000001" class="form-control" name="lat1" value="55.0" required>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Ширина (градусы)</label>
-                            <input type="number" step="0.001" class="form-control" name="width" value="1.0" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Высота (градусы)</label>
-                            <input type="number" step="0.001" class="form-control" name="height" value="1.0" required>
-                        </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Долгота 1</label>
+                        <input type="number" step="0.000001" class="form-control" name="lon1" value="37.0" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Получить изображение</button>
-                </form>
-            </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Широта 2</label>
+                        <input type="number" step="0.000001" class="form-control" name="lat2" value="55.1" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Долгота 2</label>
+                        <input type="number" step="0.000001" class="form-control" name="lon2" value="37.1" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Получить изображение</button>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Результаты -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Результат детекции</h5>
-                <div id="detectionResult">
-                    <!-- Здесь будет результат детекции -->
-                </div>
-            </div>
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Результат детекции</h5>
+        <div id="detectionResult">
         </div>
     </div>
 </div>
@@ -84,37 +70,25 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const fileMode = document.getElementById('file_mode');
-    const coordMode = document.getElementById('coord_mode');
-    const fileForm = document.getElementById('file_form');
-    const coordFormDiv = document.getElementById('coord_form');
-    
-    // Переключение режимов
-    fileMode.addEventListener('change', function() {
-        fileForm.style.display = 'block';
-        coordFormDiv.style.display = 'none';
-    });
-    
-    coordMode.addEventListener('change', function() {
-        fileForm.style.display = 'none';
-        coordFormDiv.style.display = 'block';
-    });
-    
-    // Обработка формы координат
-    const coordForm = document.getElementById('coordForm');
-    if (coordForm) {
-        coordForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(coordForm);
-            const params = new URLSearchParams();
-            for (const [key, value] of formData.entries()) {
-                params.append(key, value);
-            }
-            window.location.href = `/areaimg?${params.toString()}`;
-        });
-    }
-});
+function showFileTest() {
+    document.getElementById('fileTestForm').style.display = 'block';
+    document.getElementById('coordTestForm').style.display = 'none';
+    document.querySelector('button[onclick="showFileTest"]').classList.add('btn-primary');
+    document.querySelector('button[onclick="showFileTest"]').classList.remove('btn-outline-primary');
+    document.querySelector('button[onclick="showCoordTest"]').classList.add('btn-outline-primary');
+    document.querySelector('button[onclick="showCoordTest"]').classList.remove('btn-primary');
+}
+
+function showCoordTest() {
+    document.getElementById('fileTestForm').style.display = 'none';
+    document.getElementById('coordTestForm').style.display = 'block';
+    document.querySelector('button[onclick="showCoordTest"]').classList.add('btn-primary');
+    document.querySelector('button[onclick="showCoordTest"]').classList.remove('btn-outline-primary');
+    document.querySelector('button[onclick="showFileTest"]').classList.add('btn-outline-primary');
+    document.querySelector('button[onclick="showFileTest"]').classList.remove('btn-primary');
+}
+
+// Показываем форму загрузки файла по умолчанию
+showFileTest();
 </script>
-<script src="/static/js/test.js"></script>
 {% endblock %} 
