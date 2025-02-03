@@ -133,7 +133,6 @@ async def get_area_image(
             #Детектируем аномалии
             prediction = obj_detector.detect(img2)
             if len(prediction) > 0:
-
                 for pred in prediction:
                     draw_box(img, pred['box'], pred['type_id'], (0, 255, 0), 2)
 
