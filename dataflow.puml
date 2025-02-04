@@ -26,11 +26,13 @@ backend_server -> user: return status of operation
 == Delete region from regions list ==
 user -> backend_server: DELETE("/regions/{ID}") - delete region with id=ID request
 backend_server -> user: return status of operation
-== Get satellite Earth surface photo ==
+== Detect wildfire on the satellite Earth surface photo ==
 user -> backend_server: GET("/areaimg") - photo request for concrete longitude and latitude
 backend_server -> satellite_service: Request Earth surface photo at concrete coordinates
 satellite_service -> backend_server: Return photo
-backend_server -> user: return photo
+backend_server -> detector: predict wildfire
+detector -> backend_server: return result image
+backend_server -> user: return photo and metrics
 == Send custom image to test microservice ==
 user -> backend_server: POST("/tstimage") - test image send request
 backend_server -> user: return status of operation
@@ -39,8 +41,9 @@ user -> backend_server: GET("/tstimage") - get last test image request
 backend_server -> user: return last test image
 == Get detector result image for the test image ==
 user -> backend_server: GET("/tstdetect") - detector result image for the test image request
-backend_server -> scan_server: request test image processing by detector
-scan_server -> backend_server: return result image
+backend_server -> backend_server: read test image
+backend_server -> detector: predict wildfire
+detector -> backend_server: return result image
 backend_server -> user: return result image
 == Get region map image with wildfire marks ==
 user -> backend_server: GET("/areamap/{ID}") - request map image for the region with id=ID

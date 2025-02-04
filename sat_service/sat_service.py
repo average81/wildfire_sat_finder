@@ -57,5 +57,9 @@ class Image_service:
     def set_params(self, settings: SatServiceSettings):
         self.active_service.set_params(settings.api_key, settings.user_id)
 
+    # Запрос параметров
+    def get_params(self):
+        return self.active_service.get_params()
+
 
 sat_img_service = Image_service()

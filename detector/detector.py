@@ -12,6 +12,7 @@ class Anomaly_detector:
     def __init__(self):
         self.model = detectors[0]
         self.model.confidence = 0.02
+        self.model.min_area = 0
 
     def get_models(self):
         return [det.get_model_name() for det in detectors]
