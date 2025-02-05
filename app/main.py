@@ -410,3 +410,49 @@ async def get_active_service(request: Request):
         "active_page": "settings",
         "active_service": active_info
     })
+
+# Запрос таблицы обнаружений объектов
+@app.get("/detections/period")
+async def get_detections(request: Request, start_time: str, end_time: str):
+    # Преобразуем время из строки в datetime
+    start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    detections = wildfire_params_repository.get_detections(start_time, end_time)
+    #Создаем список для json
+    detections_list = []
+    for detection in detections:
+        detections_list.append({
+            "id": detection.id,
+            "time": str(detection.time),
+            "lat": (detection.lat1 + detection.lat2) / 2,
+            "lon": (detection.lon1 + detection.lon2) / 2,
+            "score": detection.score,
+            "name": detection.name
+        })
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content=detections_list)
+
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "active_page": "detections",
+        "detections": detections_list
+    })
+
+# Запрос всей таблицы обнаружений объектов
+@app.get("/detections")
+async def get_detections(request: Request):
+    detections = wildfire_params_repository.get_all_detections()
+    #Создаем список для json
+    detections_list = []
+    for detection in detections:
+        detections_list.append({
+            "id": detection.id,
+            "time": str(detection.time),
+            "lat": (detection.lat1 + detection.lat2) / 2,
+            "lon": (detection.lon1 + detection.lon2) / 2,
+            "score": detection.score,
+            "name": detection.name
+        })
+        print(detection.time)
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content=detections_list)

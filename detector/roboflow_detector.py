@@ -1,17 +1,20 @@
+# Модуль работы с моделью, расположенной на платформе Roboflow
 from inference_sdk import InferenceHTTPClient
 from typing import Any, Dict, Tuple, Union
 import numpy as np
 import tempfile
 from PIL import Image
-
+# Настройки клиента подключения к платформе Roboflow
 client = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
     api_key="2UgAsIW11EHQmt8gh36L"
 )
+# Список пригодных для использования моделей Roboflow
 roboflow_models = [
     {'name': 'Roboflow 3.0 Object Detection (Fast)', 'model_id': "wildfire-tksrf/2"}
 ]
 
+# Класс работы с моделью на платформе Roboflow
 class RoboFlow_detector:
     """
     Класс для обработки изображений и интеграции с моделью инференса.
@@ -28,9 +31,11 @@ class RoboFlow_detector:
         self.model_num = 0
         self.confidence = 0.2  # Стандартный порог уверенности
 
+    # Получение имени модели
     def get_model_name(self):
         return roboflow_models[self.model_num]["name"]
 
+    # Обработка изображения
     def detect(self, image: np.ndarray):
         """
         Запускает инференс модели на заданном изображении.

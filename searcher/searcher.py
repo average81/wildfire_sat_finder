@@ -1,8 +1,9 @@
 #Модуль поиска объектов в заданной области
 from sat_service.sat_service import sat_img_service
 from detector.detector import obj_detector
-from repository.repository import wildfire_params_repository
+from repository.repository import wildfire_params_repository, Detection
 import time
+import datetime
 import threading
 import numpy as np
 
@@ -32,11 +33,17 @@ class Object_Searcher:
                             prediction = obj_detector.detect(img2)
                             if len(prediction) > 0:
                                 for pred in prediction:
-                                    #Тут в дальнейшем будем писать в базу данных
+                                    #Пишем в репозиторий
+                                    detection = Detection(lat1 = cur_lat, lon1 = cur_lon, lat2 = cur_lat + 0.015,
+                                                          lon2 = cur_lon + 0.015, score = pred['score'], id = pred['type_id'],
+                                                          name = pred['type_name'], time = datetime.datetime.now())
+
+                                    wildfire_params_repository.add_detection(detection)
                                     print(f"В квадрате {cur_lat}, {cur_lon}, {cur_lat + 0.015}, {cur_lon + 0.015} "
-                                          f"найден объект {pred['type_name']}, вероятность {pred['score']}")
+                                          f"найден объект {pred['type_name']}, вероятность {pred['score']},"
+                                          f" время {detection.time}")
             # Выдерживаем паузу в сутки
-            time.sleep(60)
+            time.sleep(6)
 
 fire_searcher = Object_Searcher()
 t = threading.Thread(target= fire_searcher.search_thread)
