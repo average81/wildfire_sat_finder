@@ -1,12 +1,11 @@
-import httpx
 from fastapi import FastAPI, HTTPException, Request, Response, File, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
-from pydantic import BaseModel
+from searcher.searcher import fire_searcher
 from fastapi.staticfiles import StaticFiles
-from sat_service.sat_service import sat_img_service
+from sat_service.sat_service import sat_img_service, SatServiceSettings
 import cv2
 import numpy as np
 import base64
@@ -19,15 +18,6 @@ templates = Jinja2Templates(directory="app/templates")
 # Подключение статических файлов
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-
-
-class SatServiceSettings(BaseModel):
-    api_key: str
-    user_id: str
-
-class DetectorSettings(BaseModel):
-    score_threshold: float
-    min_area: float
 
 
 
@@ -66,18 +56,22 @@ async def root(request: Request):
     # Возвращаем HTML страницу с настройками
     return templates.TemplateResponse("index.html", {"request": request, "active_page": "monitoring"})
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 # Управление email адресами
+# Запрос адресов для уведомлений
 @app.get("/emails")
 async def get_emails(request: Request):
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content=wildfire_params_repository.get_emails())  # возвращаем список
     return templates.TemplateResponse("emails.html", {"request": request, "active_page": "emails"})
 
+# Добавление нового адреса для уведомления
 @app.post("/emails/add")
 async def add_email(email: Email):
     id = wildfire_params_repository.add_email(email.email)  # Просто добавляем email в список
     return {"id": id, "email": email.email}  # Возвращаем индекс как id
 
+# Удаление адреса для уведомления
 @app.delete("/emails/{email_id}")
 async def delete_email(email_id: int):
     try:
@@ -87,26 +81,32 @@ async def delete_email(email_id: int):
     return {"message": "Email deleted"}
 
 # Управление регионами
+# Запрос регионов наблюдения
 @app.get("/regions")
 async def get_regions(request: Request):
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content=wildfire_params_repository.get_regions())  # возвращаем список
     return templates.TemplateResponse("regions.html", {"request": request, "active_page": "regions"})
 
+# Создание нового региона наблюдения
 @app.post("/regions/add")
 async def add_region(region: Region):
     id = wildfire_params_repository.add_region(region.dict())  # добавляем регион в список
+    fire_searcher.search_area_update()
     return {"id": id, "region": region.dict()}
 
+# Удаление региона наблюдения
 @app.delete("/regions/{region_id}")
 async def delete_region(region_id: int):
     try:
         wildfire_params_repository.remove_region(region_id)
+        fire_searcher.search_area_update()
     except Exception as e:
         raise HTTPException(status_code=404, detail=e)
     return {"message": "Region deleted"}
 
 # Работа с изображениями
+# Запрос изображения с нанесенными рамками найденных объектов и метриками
 @app.get("/areaimg")
 async def get_area_image(
     request: Request,
@@ -127,10 +127,12 @@ async def get_area_image(
             if max > 0:
                 img = img * (255.0 / max)
                 img = img.astype(np.uint8)
-
-            # Детектируем аномалии
+                #img2 = img2 * (255.0 / max)
+                #img2 = img2.astype(np.uint8)
+            #Детектируем аномалии
             prediction = obj_detector.detect(img2)
             if len(prediction) > 0:
+
                 for pred in prediction:
                     draw_box(img, pred['box'], pred['type_id'], (0, 255, 0), 2)
 
@@ -151,6 +153,8 @@ async def get_area_image(
         print(f"Error getting image: {str(e)}")
         encoded_img = None
 
+
+    # Если запрос JSON, возвращаем ответ в формате JSON
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
             "coordinates": {
@@ -161,6 +165,8 @@ async def get_area_image(
             "encoded_img": encoded_img
         })
 
+
+    # Если запрос html, возвращаем страницу
     return templates.TemplateResponse("image.html", {
         "request": request,
         "coordinates": {
@@ -174,29 +180,35 @@ async def get_area_image(
         "active_page": "test"
     })
 
+# Запрос сохраненного изображения для теста
 @app.get("/tstimage")
 async def test_page(request: Request):
+    try:
+        img = cv2.imread("testimage.jpg")
+    except Exception as e:
+        img = None
+    if img is None:
+        return {"message": "Test image not found"}
+    ret, buffer = cv2.imencode('.jpg', img)
+    encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
-            "description": "Endpoint для тестирования детектора аномалий",
-            "methods": {
-                "GET": "Получить страницу тестирования",
-                "POST": "Загрузить тестовое изображение"
-            }
+            "encoded_img": encoded_img
         })
-    return templates.TemplateResponse("test.html", {"request": request, "active_page": "test"})
+    return templates.TemplateResponse("test.html", {"request": request, "encoded_img": encoded_img, "active_page": "test"})
 
+# Загрузка изображения для теста
 @app.post("/tstimage")
 async def upload_test_image(file: UploadFile = File(...)):
     #Преобразуем изображение в jpg
     img = cv2.imdecode(np.frombuffer(file.file.read(), np.uint8), cv2.IMREAD_COLOR)
     if img is None:
         return {"message": "Test image not found"}
-    img2 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     #Сохраняем тестовое изображение в файл
     cv2.imwrite("testimage.jpg", img)
     return {"filename": file.filename}
 
+# Запрос результата работы детектора на тестовом изображении
 @app.get("/tstdetect")
 async def test_detect(request: Request):
     # Открываем тестовое изображение, если оно есть
@@ -204,7 +216,6 @@ async def test_detect(request: Request):
     if img is None:
         return {"message": "Test image not found"}
     img2 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    
     # Запускаем детектор
     objects = []
     prediction = obj_detector.detect(img2)
@@ -241,9 +252,10 @@ async def test_detect(request: Request):
         "active_page": "test"
     })
 
+# Запрос карты заданного региона с метками пожаров (пока не реализовано)
 @app.get("/areamap/{region_id}")
 async def get_area_map(request: Request, region_id: int):
-    regions = obj_detector.get_regions()
+    regions = wildfire_params_repository.get_regions()
     if region_id > len(regions):
         raise HTTPException(status_code=404, detail="Region not found")
     region = regions[region_id - 1]
@@ -260,94 +272,88 @@ async def get_area_map(request: Request, region_id: int):
         "region": region
     })
 
-# Настройка модулей
+# Запрос параметров спутникового сервиса
 @app.get("/sat_service")
 async def get_sat_service(request: Request):
+    params = sat_img_service.get_params()
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
             "current_settings": {
-                "api_key": "current_key",
-                "user_id": "current_user"
-            },
-            "available_services": [
-                {
-                    "name": "Sentinel-2",
-                    "description": "Европейский спутник с разрешением 10м",
-                    "base_url": "sentinel_url"
-                },
-                {
-                    "name": "Landsat-8",
-                    "description": "Американский спутник с разрешением 30м",
-                    "base_url": "landsat_url"
-                }
-            ]
+                "api_key": params.api_key,
+                "user_id": params.user_id,
+            }
         })
     return templates.TemplateResponse("index.html", {
-        "request": request, 
+        "request": request,
+        "current_settings": {
+            "api_key": params.api_key,
+            "user_id": params.user_id,
+        },
         "active_page": "settings"
     })
 
+# Запись параметров спутникового сервиса
 @app.put("/sat_service")
 async def configure_sat_service(settings: SatServiceSettings):
-    # Здесь будет логика настройки сервиса спутниковых снимков
-    return settings
+    sat_img_service.set_params(settings)
+    return JSONResponse(content={
+            "current_settings": {
+                "api_key": settings.api_key,
+                "user_id": settings.user_id,
+            }
+        })
 
+
+#Обработка запроса параметров детектора
 @app.get("/detector")
 async def get_detector(
     request: Request,
-    lat1: float,
-    lon1: float,
-    lat2: float,
-    lon2: float
 ):
+    min_area = obj_detector.model.min_area
+    score_threshold = obj_detector.model.confidence
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content={
-            "input_coordinates": {
-                "lat1": lat1, "lon1": lon1,
-                "lat2": lat2, "lon2": lon2
-            },
-            "detection_results": {
-                "objects_found": 3,
-                "metrics": {
-                    "precision": 0.95,
-                    "recall": 0.87,
-                    "f1_score": 0.91
-                }
-            }
+            "score_threshold": score_threshold,
+            "min_area": min_area
         })
-    
-    # Получаем изображение
-    width = abs(lon2 - lon1)
-    height = abs(lat2 - lat1)
-    img = sat_img_service.get_image(lat1, lon1, width, height)
-    
-    # Конвертируем изображение для отображения
-    img = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
-    
-    # Здесь будет логика детектора
-    # Пока просто рисуем тестовую рамку
-    cv2.rectangle(img, (100, 100), (200, 200), (0, 255, 0), 2)
-    
-    # Кодируем изображение для отображения
-    ret, buffer = cv2.imencode('.jpg', img)
-    encoded_img = base64.b64encode(buffer.tobytes()).decode('utf-8')
-    
-    return templates.TemplateResponse("detector.html", {
+
+    return templates.TemplateResponse("index.html", {
         "request": request,
-        "active_page": "test",
-        "coordinates": {
-            "lat1": lat1, "lon1": lon1,
-            "lat2": lat2, "lon2": lon2
-        },
-        "encoded_img": encoded_img,
-        "metrics": {
-            "precision": 0.95,
-            "recall": 0.87,
-            "f1_score": 0.91
-        }
+        "active_page": "settings",
+        "score_threshold": score_threshold,
+        "min_area": min_area,
+        "message": ""
     })
 
-# Добавим новые эндпоинты для работы с сервисами
+# Запись параметров детектора
+@app.put("/detector")
+async def put_detector(
+        request: Request,
+):
+    #Получаем параметры из тела сообщения
+    body = await request.json()
+    score_threshold = body.get('score_threshold')
+    min_area = body.get('min_area')
+    obj_detector.model.confidence = score_threshold
+    if request.headers.get('Accept') == 'application/json':
+        return JSONResponse(content={
+            "score_threshold": score_threshold,
+            "min_area": min_area
+        })
+
+    result = {
+        "status": "success",
+        "message": f"Score threshold set to {score_threshold}, min area set to {min_area}"
+    }
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "active_page": "settings",
+        "score_threshold": score_threshold,
+        "min_area": min_area,
+        "message": result["message"]
+    })
+
+# Запрос имен спутниковых сервисов
 @app.get("/sat_services")
 async def get_available_services(request: Request):
     services = sat_img_service.get_services()
@@ -363,6 +369,7 @@ async def get_available_services(request: Request):
         "services": service_names
     })
 
+# Установка активного сервиса
 @app.post("/sat_services/active")
 async def set_active_service(request: Request):
     try:
@@ -386,6 +393,7 @@ async def set_active_service(request: Request):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+# Запрос активного сервиса
 @app.get("/sat_services/active")
 async def get_active_service(request: Request):
     active = sat_img_service.active_service
