@@ -456,3 +456,9 @@ async def get_detections(request: Request):
         print(detection.time)
     if request.headers.get('Accept') == 'application/json':
         return JSONResponse(content=detections_list)
+
+    return templates.TemplateResponse("fires.html", {
+        "request": request,
+        "detections_list": detections_list,
+        "active_page": "fires"
+    })

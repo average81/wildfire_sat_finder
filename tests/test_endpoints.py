@@ -150,6 +150,30 @@ async def test_endpoints():
             print_response("/sat_services/active (POST)", response)
             update_stats("/sat_services/active (POST)", response, results)
 
+            # Тест получения списка детекций
+            print("\n=== Testing detections endpoints ===")
+            
+            # GET all detections
+            response = await client.get(
+                f"{BASE_URL}/detections",
+                headers={"Accept": "application/json"}
+            )
+            print_response("/detections", response)
+            update_stats("/detections", response, results)
+
+            # GET detections by period
+            params = {
+                "start_time": "2024-01-01 00:00:00",
+                "end_time": "2024-12-31 23:59:59"
+            }
+            response = await client.get(
+                f"{BASE_URL}/detections/period",
+                params=params,
+                headers={"Accept": "application/json"}
+            )
+            print_response("/detections/period", response)
+            update_stats("/detections/period", response, results)
+
     except Exception as e:
         print(f"Критическая ошибка: {str(e)}")
         sys.exit(1)

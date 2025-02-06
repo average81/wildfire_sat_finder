@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Пожары - Сервис мониторинга{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Обнаруженные пожары</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Время</th>
+                            <th>Широта</th>
+                            <th>Долгота</th>
+                            <th>Вероятность</th>
+                            <th>Тип</th>
+                        </tr>
+                    </thead>
+                    <tbody id="firesTableBody">
+                        {% for detection in detections_list %}
+                        <tr>
+                            <td>{{ detection.id }}</td>
+                            <td>{{ detection.time }}</td>
+                            <td>{{ "%.6f"|format(detection.lat) }}</td>
+                            <td>{{ "%.6f"|format(detection.lon) }}</td>
+                            <td>{{ "%.2f"|format(detection.score) }}</td>
+                            <td>{{ detection.name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/fires.js"></script>
+{% endblock %} 
