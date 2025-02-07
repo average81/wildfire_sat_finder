@@ -27,6 +27,10 @@
 - https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-101
 - https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-152
 - https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-50
+Метрики:
+
+![all_metrics_comparison.png](all_metrics_comparison.png)
+
 
 ## Установка
 
