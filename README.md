@@ -25,11 +25,12 @@
 - https://universe.roboflow.com/dewfe2f3f23f/wildfire-detector-satelite
 
 Модели:
-- https://huggingface.co/ZDenis/WildfireDetectorSatelite-YOLOv8
-- https://huggingface.co/ZDenis/WildfireDetectorSatelite-YOLOv11
-- https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-101
-- https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-152
-- https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-50
+- YOLOv8 https://huggingface.co/ZDenis/WildfireDetectorSatelite-YOLOv8
+- YOLOv11 https://huggingface.co/ZDenis/WildfireDetectorSatelite-YOLOv11
+- ResNet-101 https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-101
+- ResNet-152 https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-152
+- ResNet-50 https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-50
+- Roboflow 3.0 Object Detection (Fast) https://universe.roboflow.com/dewfe2f3f23f/wildfire-detector-satelite/model/2
 
 Метрики:
 
