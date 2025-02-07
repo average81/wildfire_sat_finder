@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir protobuf==3.20.3  # Явная фиксация версии для совместимости
 
 # Копируем все файлы приложения
-COPY . .
+COPY ./app-prototype-streamlit .
 
 # Экспонируем порт Streamlit
 EXPOSE 8501
