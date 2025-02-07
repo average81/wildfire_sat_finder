@@ -17,6 +17,17 @@
 с ИИ моделью детектирования объектов YOLO8.
 Примененная модель находится на платформе по адресу: https://universe.roboflow.com/wildfire-kwxfu/wildfire-tksrf
 
+Прототип сервиса https://huggingface.co/spaces/ZDenis/WildfireDetectorSatelite
+Датасет:
+- https://huggingface.co/datasets/ZDenis/WildfireDetectorSateliteDataset-COCO
+- https://universe.roboflow.com/dewfe2f3f23f/wildfire-detector-satelite
+Модели:
+- https://huggingface.co/ZDenis/WildfireDetectorSatelite-YOLOv8
+- https://huggingface.co/ZDenis/WildfireDetectorSatelite-YOLOv11
+- https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-101
+- https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-152
+- https://huggingface.co/ZDenis/WildfireDetectorSatelite-ResNet-50
+
 ## Установка
 
 ### Последовательность установки веб микросервиса
